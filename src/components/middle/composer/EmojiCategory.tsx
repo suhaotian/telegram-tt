@@ -27,11 +27,12 @@ type OwnProps = {
   allEmojis: AllEmojis;
   observeIntersection: ObserveFn;
   shouldRender: boolean;
+  shouldCalculateHeight?: boolean;
   onEmojiSelect: (emoji: string, name: string) => void;
 };
 
 const EmojiCategory: FC<OwnProps> = ({
-  category, index, allEmojis, observeIntersection, shouldRender, onEmojiSelect,
+  category, index, shouldCalculateHeight = true, allEmojis, observeIntersection, shouldRender, onEmojiSelect,
 }) => {
   // eslint-disable-next-line no-null/no-null
   const ref = useRef<HTMLDivElement>(null);
@@ -43,12 +44,12 @@ const EmojiCategory: FC<OwnProps> = ({
   const lang = useOldLang();
   const { isMobile } = useAppLayout();
 
-  const emojisPerRow = isMobile
+  const emojisPerRow = isMobile && shouldCalculateHeight
     ? Math.floor(
       (windowSize.get().width - MOBILE_CONTAINER_PADDING + EMOJI_MARGIN) / (EMOJI_SIZE_PICKER + EMOJI_MARGIN),
     )
     : EMOJIS_PER_ROW_ON_DESKTOP;
-  const height = Math.ceil(category.emojis.length / emojisPerRow)
+  const height = shouldCalculateHeight && Math.ceil(category.emojis.length / emojisPerRow)
     * (EMOJI_SIZE_PICKER + (isMobile ? EMOJI_VERTICAL_MARGIN_MOBILE : EMOJI_VERTICAL_MARGIN));
 
   return (
@@ -65,7 +66,7 @@ const EmojiCategory: FC<OwnProps> = ({
       </div>
       <div
         className={buildClassName('symbol-set-container', transitionClassNames)}
-        style={`height: ${height}px;`}
+        style={`height: ${shouldCalculateHeight ? `${height}px`: 'auto'};`}
         dir={lang.isRtl ? 'rtl' : undefined}
       >
         {shouldRender && category.emojis.map((name) => {

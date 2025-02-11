@@ -51,6 +51,111 @@
     }
   }
 
+  &:not(.desktop) {
+    .Tab_icon {
+      display: none !important;
+    }
+  }
+
+  &.desktop {
+    .left-header {
+      padding-left: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+
+      > .main-menu {
+        flex-shrink: 0;
+        width: 80px;
+        height: 100%;
+        color: var(--color-gray);
+        background-color: #212121;
+
+        & > button {
+          height: 100%;
+          width: 100%;
+          border-radius: var(--border-radius-messages-small) !important;
+        }
+      }
+    }
+    .ChatFolders {
+      flex-direction: row;
+      .TabList {
+        width: 80px;
+        padding: 0;
+        flex-direction: column;
+        font-size: 12px;
+        color: var(--color-gray);
+        background-color: #212121;
+        overflow: auto;
+
+        .Tab {
+          width: 100%;
+          padding: 0;
+          height: 80px;
+
+          &:first-child {
+            .badge {
+              display: none;
+            }
+          }
+
+          .Tab_inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: inherit;
+            white-space: inherit;
+            word-break: break-all;
+            text-align: center;
+            line-height: 1;
+          }
+
+          .Tab_icon {
+            .icon {
+              display: block;
+              font-size: 34px;
+              height: 34px;
+              width: 34px;
+            }
+
+            .emoji:not(img,.custom-emoji) {
+              display: block;
+              font-size: 28px;
+              height: 28px;
+              margin-bottom: 6px;
+            }
+
+            .render-emoji {
+              img {
+                display: block;
+                width: 34px;
+                height: 34px;
+                margin-right: 0;
+                margin-bottom: 6px;
+              }
+            }
+            .custom-emoji {
+              --custom-emoji-size: 34px;
+            }
+          }
+
+          .badge {
+            position: absolute;
+            top: 12px;
+            right: 18px;
+            color: white;
+            background: var(--color-primary);
+          }
+
+          .platform {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+
   .RecentContacts,
   .LeftSearch,
   .search-content {

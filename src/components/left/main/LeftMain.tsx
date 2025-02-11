@@ -12,6 +12,7 @@ import { PRODUCTION_URL } from '../../../config';
 import buildClassName from '../../../util/buildClassName';
 import { IS_ELECTRON, IS_TOUCH_ENV } from '../../../util/windowEnvironment';
 
+import useAppLayout from '../../../hooks/useAppLayout';
 import useForumPanelRender from '../../../hooks/useForumPanelRender';
 import useLastCallback from '../../../hooks/useLastCallback';
 import useOldLang from '../../../hooks/useOldLang';
@@ -163,10 +164,12 @@ const LeftMain: FC<OwnProps> = ({
   }, [content]);
 
   const lang = useOldLang();
+  const { isDesktop } = useAppLayout();
 
   return (
     <div
       id="LeftColumn-main"
+      className={isDesktop && content === LeftColumnContent.ChatList ? 'desktop' : ''}
       onMouseEnter={!IS_TOUCH_ENV ? handleMouseEnter : undefined}
       onMouseLeave={!IS_TOUCH_ENV ? handleMouseLeave : undefined}
     >

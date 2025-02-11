@@ -369,7 +369,7 @@ export interface ActionPayloads {
   loadRecommendedChatFolders: undefined;
   editChatFolder: {
     id: number;
-    folderUpdate: Omit<ApiChatFolder, 'id' | 'description' | 'emoticon'>;
+    folderUpdate: Omit<ApiChatFolder, 'id' | 'description'>;
   };
   addChatFolder: {
     folder: ApiChatFolder;

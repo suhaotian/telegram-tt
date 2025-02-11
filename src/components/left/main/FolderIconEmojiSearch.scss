@@ -1,0 +1,54 @@
+
+
+.FolderEmojisGroup {
+  color: #9ba0a4;
+  margin: 0.65rem 0 0.55rem;
+
+  .EmojiButton {
+    font-size: 2.25rem;
+  }
+}
+
+.folder-icon-category-icon {
+  font-size: 1.8rem !important;
+}
+
+
+
+.FolderEmojiSearchInput {
+  --height: 2.375rem;
+  --icon-size: 1.25rem;
+
+  // margin: 0 .75rem .25rem;
+  margin-bottom: 0.3rem;
+  height: var(--height);
+  color: var(--color-text-secondary);
+  border-radius: 10px;
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--icon-size);
+    display: flex;
+    align-items: center;
+  }
+  input {
+    color: var(--color-text) !important;
+    height: inherit;
+    border-radius: inherit;
+    padding-left: 2.25rem;
+    background: none !important;
+  }
+}
+
+
+
+.StickerPicker {
+  transition: transform ease .3s;
+  &.has-focus {
+    height: calc(100% + 2.5rem) !important;
+    transform: translateY(-2.5rem);
+  }
+}

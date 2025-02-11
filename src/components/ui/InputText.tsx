@@ -1,7 +1,7 @@
 import type {
   ChangeEvent, FormEvent, RefObject,
 } from 'react';
-import type { FC } from '../../lib/teact/teact';
+import type { FC, TeactNode } from '../../lib/teact/teact';
 import React, { memo } from '../../lib/teact/teact';
 
 import buildClassName from '../../util/buildClassName';
@@ -24,6 +24,7 @@ type OwnProps = {
   tabIndex?: number;
   teactExperimentControlled?: boolean;
   inputMode?: 'text' | 'none' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search';
+  children?: TeactNode;
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   onInput?: (e: FormEvent<HTMLInputElement>) => void;
   onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -54,6 +55,7 @@ const InputText: FC<OwnProps> = ({
   onKeyDown,
   onBlur,
   onPaste,
+  children
 }) => {
   const lang = useOldLang();
   const labelText = error || success || label;
@@ -95,6 +97,7 @@ const InputText: FC<OwnProps> = ({
       {labelText && (
         <label htmlFor={id}>{labelText}</label>
       )}
+      {children}
     </div>
   );
 };

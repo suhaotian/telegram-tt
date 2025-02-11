@@ -1,6 +1,6 @@
 import type { FC } from '../../../../lib/teact/teact';
 import React, {
-  memo, useCallback, useEffect, useMemo, useState,
+  memo, useCallback, useEffect, useMemo, useRef, useState,
 } from '../../../../lib/teact/teact';
 import { getActions, getGlobal, withGlobal } from '../../../../global';
 
@@ -31,6 +31,12 @@ import FloatingActionButton from '../../../ui/FloatingActionButton';
 import InputText from '../../../ui/InputText';
 import ListItem from '../../../ui/ListItem';
 import Spinner from '../../../ui/Spinner';
+import FolderIcon from "../../../ui/FolderIcon";
+import FolderIconPicker from '../../main/FolderIconPicker.async';
+import useFlag from '../../../../hooks/useFlag';
+import Button from '../../../ui/Button';
+
+
 
 type OwnProps = {
   state: FoldersState;
@@ -94,6 +100,8 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
 
   const [isIncludedChatsListExpanded, setIsIncludedChatsListExpanded] = useState(false);
   const [isExcludedChatsListExpanded, setIsExcludedChatsListExpanded] = useState(false);
+  const [isFolderIconPickerOpen, openFolderIconPicker, closeFolderIconPicker] = useFlag(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (isRemoved) {
@@ -154,6 +162,10 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
   const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const { currentTarget } = event;
     dispatch({ type: 'setTitle', payload: currentTarget.value.trim() });
+  }, [dispatch]);
+
+  const handleEmoticonSelect = useCallback((emoji: string) => {
+    dispatch({ type: 'setEmoticon', payload: emoji });
   }, [dispatch]);
 
   const handleSubmit = useCallback(() => {
@@ -224,7 +236,7 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
     return (
       <ListItem
         key={chatType.type}
-        className="settings-folders-list-item mb-1"
+        className="mb-1 settings-folders-list-item"
         narrow
         inactive
       >
@@ -252,7 +264,7 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
         {selectedChatTypes.map((key) => renderChatType(key, mode))}
         {visibleChatIds.map((id) => (
           <ListItem
-            className="settings-folders-list-item mb-1"
+            className="mb-1 settings-folders-list-item"
             narrow
             inactive
           >
@@ -281,7 +293,7 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
 
   return (
     <div className="settings-fab-wrapper">
-      <div className="settings-content no-border custom-scroll">
+      <div className="custom-scroll no-border settings-content">
         <div className="settings-content-header">
           <AnimatedIconWithPreview
             size={STICKER_SIZE_FOLDER_SETTINGS}
@@ -295,20 +307,39 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
               {lang('FilterIncludeInfo')}
             </p>
           )}
-
           <InputText
             className="mb-0"
             label={lang('FilterNameHint')}
             value={state.folder.title.text}
             onChange={handleChange}
             error={state.error && state.error === ERROR_NO_TITLE ? ERROR_NO_TITLE : undefined}
-          />
+          >
+            <Button
+              round
+              ref={buttonRef}
+              className="settings-folders-symbol-menu-button"
+              color="translucent"
+              onClick={openFolderIconPicker}
+              ariaLabel="Choose emoji or sticker"
+            >
+              <FolderIcon
+                folderId={state.folderId}
+                folderIcon={state.folder.emoticon}
+              />
+            </Button>
+          </InputText>
         </div>
 
+
+        <FolderIconPicker buttonRef={buttonRef} onEmojiSelect={sticker => {
+            const emoji = sticker.isCustomEmoji && sticker.id ? sticker.id : sticker.emoji || '';
+            handleEmoticonSelect(emoji);
+          }} isOpen={isFolderIconPickerOpen} onClose={closeFolderIconPicker}/>
+
         {!isOnlyInvites && (
-          <div className="settings-item pt-3">
+          <div className="pt-3 settings-item">
             {state.error && state.error === ERROR_NO_CHATS && (
-              <p className="settings-item-description color-danger mb-2" dir={lang.isRtl ? 'rtl' : undefined}>
+              <p className="settings-item-description mb-2 color-danger" dir={lang.isRtl ? 'rtl' : undefined}>
                 {lang(state.error)}
               </p>
             )}
@@ -329,7 +360,7 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
         )}
 
         {!isOnlyInvites && !isEditingChatList && (
-          <div className="settings-item pt-3">
+          <div className="pt-3 settings-item">
             <h4 className="settings-item-header mb-3" dir={lang.isRtl ? 'rtl' : undefined}>{lang('FilterExclude')}</h4>
 
             <ListItem
@@ -345,7 +376,7 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
           </div>
         )}
 
-        <div className="settings-item pt-3">
+        <div className="pt-3 settings-item">
           <h4 className="settings-item-header mb-3" dir={lang.isRtl ? 'rtl' : undefined}>
             {lang('FolderLinkScreen.Title')}
           </h4>

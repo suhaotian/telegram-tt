@@ -555,6 +555,30 @@ $icons-map: (
 .icon-folder::before {
   content: map.get($icons-map, "folder");
 }
+.icon-folders_bot::before {
+  content: map.get($icons-map, "folders_bot");
+}
+.icon-folders_channel::before {
+  content: map.get($icons-map, "folders_channel");
+}
+.icon-folders_chat::before {
+  content: map.get($icons-map, "folders_chat");
+}
+.icon-folders_chats::before {
+  content: map.get($icons-map, "folders_chats");
+}
+.icon-folders_folder::before {
+  content: map.get($icons-map, "folders_folder");
+}
+.icon-folders_group::before {
+  content: map.get($icons-map, "folders_group");
+}
+.icon-folders_star::before {
+  content: map.get($icons-map, "folders_star");
+}
+.icon-folders_user::before {
+  content: map.get($icons-map, "folders_user");
+}
 .icon-fontsize::before {
   content: map.get($icons-map, "fontsize");
 }

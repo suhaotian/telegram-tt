@@ -117,3 +117,38 @@
   flex-direction: column;
   overflow: hidden;
 }
+
+.input-group {
+  button.Button.settings-folders-symbol-menu-button {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    cursor: default;
+    line-height: 1;
+    color: var(--color-composer-button);
+    border-radius: 10px;
+    .emoji {
+      font-size: 28px;
+    }
+    .icon {
+      font-size: 34px;
+    }
+    .render-emoji img {
+      width: 30px;
+      height: 30px;
+    }
+    .custom-emoji {
+      --custom-emoji-size: 32px;
+    }
+    &:hover {
+      background: none;
+    }
+  }
+  &[dir='rtl'] {
+    button.Button.settings-folders-symbol-menu-button {
+      left: 0;
+      right: auto;
+    }
+  }
+}

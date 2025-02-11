@@ -32,6 +32,8 @@ import StoryRibbon from '../../story/StoryRibbon';
 import TabList from '../../ui/TabList';
 import Transition from '../../ui/Transition';
 import ChatList from './ChatList';
+import FolderIcon from '../../ui/FolderIcon';
+import useAppLayout from '../../../hooks/useAppLayout';
 
 type OwnProps = {
   onSettingsScreenSelect: (screen: SettingsScreens) => void;
@@ -115,7 +117,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
   const allChatsFolder: ApiChatFolder = useMemo(() => {
     return {
       id: ALL_FOLDER_ID,
-      title: { text: orderedFolderIds?.[0] === ALL_FOLDER_ID ? lang('FilterAllChatsShort') : lang('FilterAllChats') },
+      title: { text: lang('FilterAllChats') },
       includedChatIds: MEMO_EMPTY_ARRAY,
       excludedChatIds: MEMO_EMPTY_ARRAY,
     } satisfies ApiChatFolder;
@@ -136,7 +138,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
   const allChatsFolderIndex = displayedFolders?.findIndex((folder) => folder.id === ALL_FOLDER_ID);
   const isInAllChatsFolder = allChatsFolderIndex === activeChatFolder;
   const isInFirstFolder = FIRST_FOLDER_INDEX === activeChatFolder;
-
+  const { isDesktop } = useAppLayout();
   const folderCountersById = useFolderManagerForUnreadCounters();
   const folderTabs = useMemo(() => {
     if (!displayedFolders || !displayedFolders.length) {
@@ -198,11 +200,16 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
 
       return {
         id,
-        title: renderTextWithEntities({
-          text: title.text,
-          entities: title.entities,
-          noCustomEmojiPlayback: folder.noTitleAnimations,
-        }),
+        title: <>
+          {isDesktop && <div className="Tab_icon">
+            <FolderIcon folderId={id} folderIcon={folder.emoticon} />
+          </div>}
+          {renderTextWithEntities({
+            text: title.text,
+            entities: title.entities,
+            noCustomEmojiPlayback: folder.noTitleAnimations,
+          })}
+        </>,
         badgeCount: folderCountersById[id]?.chatsCount,
         isBadgeActive: Boolean(folderCountersById[id]?.notificationsCount),
         isBlocked,
@@ -211,7 +218,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
     });
   }, [
     displayedFolders, maxFolders, folderCountersById, lang, chatFoldersById, maxChatLists, folderInvitesById,
-    maxFolderInvites,
+    maxFolderInvites, isDesktop
   ]);
 
   const handleSwitchTab = useLastCallback((index: number) => {
