@@ -17,7 +17,6 @@ import buildStyle from '../../../util/buildStyle';
 import { formatCurrency } from '../../../util/formatCurrency';
 import { formatStarsAsIcon } from '../../../util/localization/format';
 
-import useCustomBackground from '../../../hooks/useCustomBackground';
 import useLang from '../../../hooks/useLang';
 import useLastCallback from '../../../hooks/useLastCallback';
 
@@ -30,6 +29,7 @@ import Switcher from '../../ui/Switcher';
 import TextArea from '../../ui/TextArea';
 
 import styles from './GiftComposer.module.scss';
+import ChatBackground from '../../middle/ChatBackground';
 
 export type OwnProps = {
   gift: GiftOption;
@@ -38,10 +38,7 @@ export type OwnProps = {
 
 export type StateProps = {
   captionLimit?: number;
-  theme: ThemeKey;
-  isBackgroundBlurred?: boolean;
   patternColor?: string;
-  customBackground?: string;
   backgroundColor?: string;
   peer?: ApiPeer;
   currentUserId?: string;
@@ -55,11 +52,8 @@ function GiftComposer({
   peerId,
   peer,
   captionLimit,
-  theme,
-  isBackgroundBlurred,
   patternColor,
   backgroundColor,
-  customBackground,
   currentUserId,
   isPaymentFormLoading,
 }: OwnProps & StateProps) {
@@ -70,8 +64,6 @@ function GiftComposer({
   const [giftMessage, setGiftMessage] = useState<string>('');
   const [shouldHideName, setShouldHideName] = useState<boolean>(false);
   const [shouldPayForUpgrade, setShouldPayForUpgrade] = useState<boolean>(false);
-
-  const customBackgroundValue = useCustomBackground(theme, customBackground);
 
   const isStarGift = 'id' in gift;
   const isPeerUser = peer && isApiPeerUser(peer);
@@ -277,14 +269,6 @@ function GiftComposer({
     );
   }
 
-  const bgClassName = buildClassName(
-    styles.background,
-    styles.withTransition,
-    customBackground && styles.customBgImage,
-    backgroundColor && styles.customBgColor,
-    customBackground && isBackgroundBlurred && styles.blurred,
-  );
-
   return (
     <div className={buildClassName(styles.root, 'custom-scroll')}>
       <div
@@ -296,10 +280,7 @@ function GiftComposer({
           backgroundColor && `--theme-background-color: ${backgroundColor}`,
         )}
       >
-        <div
-          className={bgClassName}
-          style={customBackgroundValue ? `--custom-background: ${customBackgroundValue}` : undefined}
-        />
+        <ChatBackground />
         <ActionMessage key={isStarGift ? gift.id : gift.months} message={localMessage} />
       </div>
       {renderOptionsSection()}
@@ -313,9 +294,7 @@ export default memo(withGlobal<OwnProps>(
   (global, { peerId }): StateProps => {
     const theme = selectTheme(global);
     const {
-      isBlurred: isBackgroundBlurred,
       patternColor,
-      background: customBackground,
       backgroundColor,
     } = global.settings.themes[theme] || {};
     const peer = selectPeer(global, peerId);
@@ -324,10 +303,7 @@ export default memo(withGlobal<OwnProps>(
 
     return {
       peer,
-      theme,
-      isBackgroundBlurred,
       patternColor,
-      customBackground,
       backgroundColor,
       captionLimit: global.appConfig?.starGiftMaxMessageLength,
       currentUserId: global.currentUserId,

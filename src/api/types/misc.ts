@@ -6,6 +6,7 @@ import type { RegularLangFnParameters } from '../../util/localization';
 import type { ApiDocument, ApiPhoto, ApiReaction } from './messages';
 import type { ApiPremiumSection, ApiStarsSubscriptionPricing } from './payments';
 import type { ApiUser } from './users';
+import { Api as GramJs } from '../../lib/gramjs';
 
 export interface ApiInitialArgs {
   userAgent: string;
@@ -62,9 +63,13 @@ export interface ApiAttachment {
   ttlSeconds?: number;
 }
 
-export interface ApiWallpaper {
+export type ApiWallpaper = {
   slug: string;
-  document: ApiDocument;
+  id?: GramJs.WallPaper['id'];
+  idStr: string;
+  document?: ApiDocument;
+  wallpaper?: GramJs.WallPaper;
+  wallpaperNoFile?: GramJs.WallPaperNoFile;
 }
 
 export interface ApiSession {

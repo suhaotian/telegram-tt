@@ -1,6 +1,6 @@
 import type { FC } from '../../../lib/teact/teact';
 import React, {
-  memo, useCallback, useEffect, useRef,
+  memo, useCallback, useEffect, useMemo, useRef,
   useState,
 } from '../../../lib/teact/teact';
 
@@ -8,12 +8,11 @@ import type { ApiWallpaper } from '../../../api/types';
 import type { ThemeKey } from '../../../types';
 import { UPLOADING_WALLPAPER_SLUG } from '../../../types';
 
-import { CUSTOM_BG_CACHE_NAME } from '../../../config';
+import { CUSTOM_BG_CACHE_NAME, TGV_MIME_TYPE } from '../../../config';
 import buildClassName from '../../../util/buildClassName';
 import * as cacheApi from '../../../util/cacheApi';
 import { fetchBlob } from '../../../util/files';
 
-import useCanvasBlur from '../../../hooks/useCanvasBlur';
 import useMedia from '../../../hooks/useMedia';
 import useMediaWithLoadProgress from '../../../hooks/useMediaWithLoadProgress';
 import usePreviousDeprecated from '../../../hooks/usePreviousDeprecated';
@@ -22,12 +21,17 @@ import useShowTransitionDeprecated from '../../../hooks/useShowTransitionDepreca
 import ProgressSpinner from '../../ui/ProgressSpinner';
 
 import './WallpaperTile.scss';
+import WallpaperBackgroundGradient from './WallpaperBackgroundGradient';
+import { numberToHexColor } from '../../../util/colors';
+import { ungzip } from 'pako';
+import fixFirefoxSvg from '../../../util/fixFirefoxSvg';
+import { IS_FIREFOX } from '../../../util/windowEnvironment';
 
 type OwnProps = {
   wallpaper: ApiWallpaper;
   theme: ThemeKey;
   isSelected: boolean;
-  onClick: (slug: string) => void;
+  onClick: (id: string) => void;
 };
 
 const WallpaperTile: FC<OwnProps> = ({
@@ -36,13 +40,13 @@ const WallpaperTile: FC<OwnProps> = ({
   isSelected,
   onClick,
 }) => {
-  const { slug, document } = wallpaper;
-  const localMediaHash = `wallpaper${document.id!}`;
-  const localBlobUrl = document.previewBlobUrl;
-  const previewBlobUrl = useMedia(`${localMediaHash}?size=m`);
-  const thumbRef = useCanvasBlur(document.thumbnail?.dataUri, Boolean(previewBlobUrl), true);
+  const { idStr, document } = wallpaper;
+  const localMediaHash = `wallpaper${document?.id!}`;
+  const localBlobUrl = document?.previewBlobUrl;
+  const previewBlobUrl = useMedia(document?.id && `${localMediaHash}?size=m`);
+  const imgSrc = previewBlobUrl || localBlobUrl;
   const { transitionClassNames } = useShowTransitionDeprecated(
-    Boolean(previewBlobUrl || localBlobUrl),
+    Boolean(imgSrc),
     undefined,
     undefined,
     'slow',
@@ -54,7 +58,7 @@ const WallpaperTile: FC<OwnProps> = ({
   } = useMediaWithLoadProgress(localMediaHash, !isLoadAllowed);
   const wasLoadDisabled = usePreviousDeprecated(isLoadAllowed) === false;
   const { shouldRender: shouldRenderSpinner, transitionClassNames: spinnerClassNames } = useShowTransitionDeprecated(
-    (isLoadAllowed && !fullMedia) || slug === UPLOADING_WALLPAPER_SLUG,
+    (isLoadAllowed && !fullMedia) || idStr === UPLOADING_WALLPAPER_SLUG,
     undefined,
     wasLoadDisabled,
     'slow',
@@ -65,11 +69,14 @@ const WallpaperTile: FC<OwnProps> = ({
 
   const handleSelect = useCallback(() => {
     (async () => {
-      const blob = await fetchBlob(fullMedia!);
-      await cacheApi.save(CUSTOM_BG_CACHE_NAME, cacheKeyRef.current!, blob);
-      onClick(slug);
+      if (imgSrc) {
+        let blob = await fetchBlob(fullMedia!);
+        blob = await convertTgvFileToBlob(blob);
+        await cacheApi.save(CUSTOM_BG_CACHE_NAME, cacheKeyRef.current!, blob);
+      }
+      onClick(idStr);
     })();
-  }, [fullMedia, onClick, slug]);
+  }, [fullMedia, onClick, idStr]);
 
   useEffect(() => {
     // If we've clicked on a wallpaper, select it when full media is loaded
@@ -80,31 +87,43 @@ const WallpaperTile: FC<OwnProps> = ({
   }, [fullMedia, handleSelect]);
 
   const handleClick = useCallback(() => {
-    if (fullMedia) {
+    if (fullMedia || !imgSrc) {
       handleSelect();
     } else {
       isLoadingRef.current = true;
       setIsLoadAllowed((isAllowed) => !isAllowed);
     }
-  }, [fullMedia, handleSelect]);
+  }, [fullMedia, handleSelect, imgSrc]);
+
+  const isDark = (wallpaper?.wallpaper || wallpaper?.wallpaperNoFile)?.dark;
+  const isPattern = !!wallpaper?.wallpaper?.pattern;
+  const backgroundSettings = (wallpaper?.wallpaper || wallpaper?.wallpaperNoFile)?.settings;
+  const colors = useMemo(() => {
+    if (!backgroundSettings) return;
+    const {
+      backgroundColor,
+      secondBackgroundColor,
+      thirdBackgroundColor,
+      fourthBackgroundColor,
+    } = backgroundSettings;
+    return [backgroundColor, secondBackgroundColor, thirdBackgroundColor, fourthBackgroundColor]
+    .filter(Boolean).map(item => numberToHexColor(item).slice(1));
+  }, [backgroundSettings]);
 
   const className = buildClassName(
     'WallpaperTile',
     isSelected && 'selected',
+    isPattern && 'is-pattern',
+    isDark && 'is-dark',
   );
 
   return (
-    <div className={className} onClick={handleClick}>
+    <div className={className} onClick={handleClick} style={imgSrc && isPattern && isDark ? `--mask-img-url: url("${imgSrc}")` : ''}>
       <div className="media-inner">
-        <canvas
-          ref={thumbRef}
-          className="thumbnail"
-        />
-        <img
-          src={previewBlobUrl || localBlobUrl}
-          className={buildClassName('full-media', transitionClassNames)}
-          alt=""
-          draggable={false}
+        {colors && <WallpaperBackgroundGradient colors={colors} className='media-canvas' />}
+        <div
+          className={buildClassName('full-media', 'media-photo', transitionClassNames)}
+          style={`background-image:url("${imgSrc}")`}
         />
         {shouldRenderSpinner && (
           <div className={buildClassName('spinner-container', spinnerClassNames)}>
@@ -115,5 +134,21 @@ const WallpaperTile: FC<OwnProps> = ({
     </div>
   );
 };
+
+const convertTgvFileToBlob = async (blob: Blob) => {
+  let result!: Blob | string | Uint8Array;
+  if (blob.type === TGV_MIME_TYPE) {
+    if (IS_FIREFOX) {
+      result = await ungzip(await blob.arrayBuffer(), {to: 'string'});
+      result = fixFirefoxSvg(result) || result;
+      const textEncoder = new TextEncoder();
+      result = textEncoder.encode(result);
+    } else {
+      result = await ungzip(await blob.arrayBuffer());
+    }
+    result = new Blob([result], { type: 'image/svg+xml' });
+  }
+  return result as Blob || blob;
+}
 
 export default memo(WallpaperTile);

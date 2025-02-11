@@ -244,6 +244,8 @@ export const GIF_MIME_TYPE = 'image/gif';
 export const LOTTIE_STICKER_MIME_TYPE = 'application/x-tgsticker';
 export const VIDEO_STICKER_MIME_TYPE = VIDEO_WEBM_TYPE;
 
+export const TGV_MIME_TYPE = 'application/x-tgwallpattern';
+
 export const SUPPORTED_PHOTO_CONTENT_TYPES = new Set([
   'image/png', 'image/jpeg', GIF_MIME_TYPE,
 ]);

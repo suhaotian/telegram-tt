@@ -9,22 +9,23 @@ import { preloadImage } from '../util/files';
 
 const useCustomBackground = (theme: ThemeKey, settingValue?: string) => {
   const { setThemeSettings } = getActions();
-  const [value, setValue] = useState(settingValue);
+  const [value, setValue] = useState<Record<string, string | undefined>>({[settingValue as string]: settingValue});
 
   useEffect(() => {
     if (!settingValue) {
       return;
     }
 
-    if (settingValue.startsWith('#')) {
-      setValue(settingValue);
+
+    if (settingValue?.startsWith('#')) {
+      setValue({...value, [settingValue]: settingValue});
     } else {
       cacheApi.fetch(CUSTOM_BG_CACHE_NAME, theme, cacheApi.Type.Blob)
         .then((blob) => {
           const url = URL.createObjectURL(blob);
           preloadImage(url)
             .then(() => {
-              setValue(`url(${url})`);
+              setValue({...value, [settingValue]: `url("${url}")`});
             });
         })
         .catch(() => {
@@ -32,14 +33,17 @@ const useCustomBackground = (theme: ThemeKey, settingValue?: string) => {
             theme,
             background: undefined,
             backgroundColor: undefined,
+            settings: undefined,
+            dark: undefined,
+            pattern: undefined,
             isBlurred: true,
             patternColor: theme === 'dark' ? DARK_THEME_PATTERN_COLOR : DEFAULT_PATTERN_COLOR,
           });
-        });
+        })
     }
   }, [settingValue, theme]);
 
-  return settingValue ? value : undefined;
+  return settingValue ? value[settingValue] : undefined;
 };
 
 export default useCustomBackground;

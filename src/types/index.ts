@@ -28,6 +28,7 @@ import type {
 } from '../api/types';
 import type { SearchResultKey } from '../util/keys/searchResultKey';
 import type { IconName } from './icons';
+import { Api } from '../lib/gramjs';
 
 export type TextPart = TeactNode;
 
@@ -68,8 +69,7 @@ export type PerformanceTypeKey = (
 export type PerformanceType = {
   [key in PerformanceTypeKey]: boolean;
 };
-
-export interface IThemeSettings {
+export interface IThemeSettings extends  Pick<Api.WallPaper, 'pattern' | 'dark' | 'settings'> {
   background?: string;
   backgroundColor?: string;
   patternColor?: string;
@@ -245,7 +245,7 @@ export enum SettingsScreens {
 }
 
 export type StickerSetOrReactionsSetOrRecent = Pick<ApiStickerSet, (
-  'id' | 'accessHash' | 'title' | 'count' | 'stickers' | 'isEmoji' | 'installedDate' | 'isArchived' |
+  'id' | 'accessHash' | 'title' | 'count' | 'stickers' | 'isEmoji' | 'packs' | 'installedDate' | 'isArchived' |
   'hasThumbnail' | 'hasStaticThumb' | 'hasAnimatedThumb' | 'hasVideoThumb' | 'thumbCustomEmojiId'
 )> & { reactions?: ApiReactionWithPaid[] };
 

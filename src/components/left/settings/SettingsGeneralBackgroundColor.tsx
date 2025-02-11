@@ -161,6 +161,10 @@ const SettingsGeneralBackground: FC<OwnProps & StateProps> = ({
         background: undefined,
         backgroundColor: color,
         patternColor,
+        settings: undefined,
+        dark: undefined,
+        pattern: undefined,
+        isBlurred: false,
       });
     }
     isFirstRunRef.current = false;
@@ -213,7 +217,7 @@ const SettingsGeneralBackground: FC<OwnProps & StateProps> = ({
 
   return (
     <div ref={containerRef} className={className}>
-      <div className="settings-item pt-3">
+      <div className="pt-3 settings-item">
         <div ref={colorPickerRef} className="color-picker">
           <canvas />
           <div

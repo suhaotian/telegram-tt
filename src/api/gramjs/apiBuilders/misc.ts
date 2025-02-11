@@ -29,23 +29,20 @@ import { buildApiPeerId, getApiChatIdFromMtpPeer } from './peers';
 import { buildApiReaction } from './reactions';
 import { buildApiUser } from './users';
 
-export function buildApiWallpaper(wallpaper: GramJs.TypeWallPaper): ApiWallpaper | undefined {
+export function buildApiWallpaper(wallpaper: GramJs.TypeWallPaper): ApiWallpaper {
   if (wallpaper instanceof GramJs.WallPaperNoFile) {
-    // TODO: Plain color wallpapers
-    return undefined;
+    return { slug: '', id: wallpaper.id, idStr: String(wallpaper.id), wallpaperNoFile: wallpaper };
   }
-
-  const { slug } = wallpaper;
 
   const document = buildApiDocument(wallpaper.document);
 
-  if (!document) {
-    return undefined;
-  }
-
+  const { slug } = wallpaper;
   return {
     slug,
+    id: wallpaper.id,
+    idStr: String(wallpaper.id),
     document,
+    wallpaper,
   };
 }
 

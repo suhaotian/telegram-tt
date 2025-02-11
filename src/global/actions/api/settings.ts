@@ -190,6 +190,7 @@ addActionHandler('uploadWallpaper', async (global, actions, payload): Promise<vo
       ...global.settings,
       loadedWallpapers: [
         {
+          idStr: UPLOADING_WALLPAPER_SLUG,
           slug: UPLOADING_WALLPAPER_SLUG,
           document: {
             mediaType: 'document',
@@ -218,16 +219,16 @@ addActionHandler('uploadWallpaper', async (global, actions, payload): Promise<vo
   }
 
   const firstWallpaper = global.settings.loadedWallpapers[0];
-  if (!firstWallpaper || firstWallpaper.slug !== UPLOADING_WALLPAPER_SLUG) {
+  if (!firstWallpaper ||  firstWallpaper.slug !== UPLOADING_WALLPAPER_SLUG) {
     return;
   }
 
   const withLocalMedia = {
     ...wallpaper,
-    document: {
+    document: wallpaper?.document ? {
       ...wallpaper.document,
       previewBlobUrl,
-    },
+    } : undefined,
   };
 
   global = {

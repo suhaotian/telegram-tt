@@ -1,6 +1,6 @@
 import type { FC } from '../../../lib/teact/teact';
 import React, {
-  memo, useCallback, useEffect, useRef,
+  memo, useCallback, useEffect, useMemo, useRef,
 } from '../../../lib/teact/teact';
 import { getActions, withGlobal } from '../../../global';
 
@@ -41,6 +41,11 @@ type StateProps = {
 const SUPPORTED_TYPES = 'image/jpeg';
 
 const runThrottled = throttle((cb) => cb(), 60000, true);
+
+
+const needBlur = (currentWallpaper?: ApiWallpaper) => {
+  return !(currentWallpaper?.wallpaperNoFile || (currentWallpaper?.wallpaper?.pattern && currentWallpaper?.document?.mimeType === 'application/x-tgwallpattern'))
+}
 
 const SettingsGeneralBackground: FC<OwnProps & StateProps> = ({
   isActive,
@@ -91,21 +96,39 @@ const SettingsGeneralBackground: FC<OwnProps & StateProps> = ({
       backgroundColor: undefined,
       isBlurred: true,
       patternColor: theme === 'dark' ? DARK_THEME_PATTERN_COLOR : DEFAULT_PATTERN_COLOR,
+      settings: undefined,
+      dark: undefined,
+      pattern: undefined,
     });
   }, [setThemeSettings, theme]);
 
-  const handleWallPaperSelect = useCallback((slug: string) => {
-    setThemeSettings({ theme: themeRef.current!, background: slug });
-    const currentWallpaper = loadedWallpapers && loadedWallpapers.find((wallpaper) => wallpaper.slug === slug);
-    if (currentWallpaper?.document.thumbnail) {
+
+  const enableBlur = useMemo(() => {
+    const currentWallpaper = loadedWallpapers?.find(item => item.slug === background || item.idStr === background);
+    return needBlur(currentWallpaper);
+  }, [loadedWallpapers, background]);
+
+  const handleWallPaperSelect = useCallback((id: string) => {
+    const currentWallpaper = loadedWallpapers && loadedWallpapers.find((wallpaper) => wallpaper.idStr === id);
+    const settings = (currentWallpaper?.wallpaper || currentWallpaper?.wallpaperNoFile)?.settings;
+
+    setThemeSettings({
+      theme: themeRef.current!, background: id,
+      settings, pattern: currentWallpaper?.wallpaper?.pattern, dark: currentWallpaper?.wallpaper?.dark
+    });
+    if (currentWallpaper?.document?.thumbnail) {
       getAverageColor(currentWallpaper.document.thumbnail.dataUri)
         .then((color) => {
           const patternColor = getPatternColor(color);
           const rgbColor = `#${rgb2hex(color)}`;
-          setThemeSettings({ theme: themeRef.current!, backgroundColor: rgbColor, patternColor });
+
+          setThemeSettings({
+            theme: themeRef.current!, backgroundColor: rgbColor, patternColor,
+            isBlurred: isBlurred && needBlur(currentWallpaper),
+          });
         });
     }
-  }, [loadedWallpapers, setThemeSettings]);
+  }, [loadedWallpapers, setThemeSettings, isBlurred]);
 
   const handleWallPaperBlurChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setThemeSettings({ theme: themeRef.current!, isBlurred: e.target.checked });
@@ -118,11 +141,12 @@ const SettingsGeneralBackground: FC<OwnProps & StateProps> = ({
     onBack: onReset,
   });
 
+
   const isUploading = loadedWallpapers?.[0] && loadedWallpapers[0].slug === UPLOADING_WALLPAPER_SLUG;
 
   return (
-    <div className="SettingsGeneralBackground settings-content custom-scroll">
-      <div className="settings-item pt-3">
+    <div className="custom-scroll settings-content SettingsGeneralBackground">
+      <div className="pt-3 settings-item">
         <ListItem
           icon="camera-add"
           className="mb-0"
@@ -147,21 +171,24 @@ const SettingsGeneralBackground: FC<OwnProps & StateProps> = ({
         <Checkbox
           label={lang('BackgroundBlurred')}
           checked={Boolean(isBlurred)}
+          disabled={!enableBlur}
           onChange={handleWallPaperBlurChange}
         />
       </div>
 
       {loadedWallpapers ? (
         <div className="settings-wallpapers">
-          {loadedWallpapers.map((wallpaper) => (
-            <WallpaperTile
-              key={wallpaper.slug}
-              wallpaper={wallpaper}
-              theme={theme}
-              isSelected={background === wallpaper.slug}
-              onClick={handleWallPaperSelect}
-            />
-          ))}
+          {loadedWallpapers.map((wallpaper) => {
+            return (
+              <WallpaperTile
+                key={wallpaper.idStr}
+                wallpaper={wallpaper}
+                theme={theme}
+                isSelected={background === wallpaper.idStr || background === wallpaper.slug}
+                onClick={handleWallPaperSelect}
+              />
+            )
+          })}
         </div>
       ) : (
         <Loading />

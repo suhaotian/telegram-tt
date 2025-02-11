@@ -18,6 +18,7 @@
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
+    z-index: 3;
   }
 
   :global(html.theme-light) &:not(.customBgImage)::before {
@@ -30,7 +31,7 @@
 
   &.customBgImage::before {
     background-image: var(--custom-background) !important;
-    transform: scale(1.1);
+    transform: scale(1);
   }
 
   :global(body:not(.no-page-transitions)) &.withTransition {
@@ -94,4 +95,48 @@
       mix-blend-mode: unset;
     }
   }
+}
+
+.isPattern {
+  background-color: #000 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:before {
+    background-image: none !important;
+  }
+}
+
+.isDark {
+  .colorsCanvas {
+    opacity: 0.46;
+    mask: center repeat;
+    mask-size: 420px auto;
+    mask-image: var(--custom-background);
+    opacity: .3;
+  }
+  .wallpaperPattern {
+    display: none;
+  }
+}
+
+.colorsCanvas {
+  width: 100%;
+  height: 150%;
+  top: -25%;
+}
+
+.wallpaperPattern {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: soft-light;
+  background: center repeat;
+  background-size: 420px auto;
+  background-image: var(--custom-background);
+  opacity: .5;
+  z-index: 2;
 }

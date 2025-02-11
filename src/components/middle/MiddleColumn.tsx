@@ -62,12 +62,11 @@ import buildClassName from '../../util/buildClassName';
 import buildStyle from '../../util/buildStyle';
 import captureEscKeyListener from '../../util/captureEscKeyListener';
 import {
-  IS_ANDROID, IS_ELECTRON, IS_IOS, IS_SAFARI, IS_TRANSLATION_SUPPORTED, MASK_IMAGE_DISABLED,
+  IS_ANDROID, IS_IOS, IS_SAFARI, IS_TRANSLATION_SUPPORTED, MASK_IMAGE_DISABLED,
 } from '../../util/windowEnvironment';
 import calculateMiddleFooterTransforms from './helpers/calculateMiddleFooterTransforms';
 
 import useAppLayout from '../../hooks/useAppLayout';
-import useCustomBackground from '../../hooks/useCustomBackground';
 import useForceUpdate from '../../hooks/useForceUpdate';
 import useHistoryBack from '../../hooks/useHistoryBack';
 import useLastCallback from '../../hooks/useLastCallback';
@@ -97,9 +96,9 @@ import MiddleHeaderPanes from './MiddleHeaderPanes';
 import PremiumRequiredPlaceholder from './PremiumRequiredPlaceholder';
 import ReactorListModal from './ReactorListModal.async';
 import MiddleSearch from './search/MiddleSearch.async';
+import ChatBackground from './ChatBackground';
 
 import './MiddleColumn.scss';
-import styles from './MiddleColumn.module.scss';
 
 interface OwnProps {
   leftColumnRef: React.RefObject<HTMLDivElement>;
@@ -125,7 +124,6 @@ type StateProps = {
   patternColor?: string;
   isLeftColumnShown?: boolean;
   isRightColumnShown?: boolean;
-  isBackgroundBlurred?: boolean;
   leftColumnWidth?: number;
   hasActiveMiddleSearch?: boolean;
   isSelectModeActive?: boolean;
@@ -180,12 +178,10 @@ function MiddleColumn({
   defaultBannedRights,
   pinnedMessagesCount,
   customBackground,
-  theme,
   backgroundColor,
   patternColor,
   isLeftColumnShown,
   isRightColumnShown,
-  isBackgroundBlurred,
   leftColumnWidth,
   hasActiveMiddleSearch,
   isSelectModeActive,
@@ -415,20 +411,8 @@ function MiddleColumn({
     unblockUser({ userId: chatId! });
   });
 
-  const customBackgroundValue = useCustomBackground(theme, customBackground);
-
   const className = buildClassName(
     MASK_IMAGE_DISABLED ? 'mask-image-disabled' : 'mask-image-enabled',
-  );
-
-  const bgClassName = buildClassName(
-    styles.background,
-    styles.withTransition,
-    customBackground && styles.customBgImage,
-    backgroundColor && styles.customBgColor,
-    customBackground && isBackgroundBlurred && styles.blurred,
-    isRightColumnShown && styles.withRightColumn,
-    IS_ELECTRON && !(renderingChatId && renderingThreadId) && styles.draggable,
   );
 
   const messagingDisabledClassName = buildClassName(
@@ -501,10 +485,11 @@ function MiddleColumn({
           onDoubleClick={resetResize}
         />
       )}
-      <div
-        className={bgClassName}
-        style={customBackgroundValue ? `--custom-background: ${customBackgroundValue}` : undefined}
-      />
+      <ChatBackground
+        isMobile={isMobile}
+        isRightColumnShown={isRightColumnShown}
+        renderingChatId={renderingChatId}
+        renderingThreadId={renderingThreadId} />
       <div id="middle-column-portals" />
       {Boolean(renderingChatId && renderingThreadId) && (
         <>
@@ -717,7 +702,8 @@ export default memo(withGlobal<OwnProps>(
   (global, { isMobile }): StateProps => {
     const theme = selectTheme(global);
     const {
-      isBlurred: isBackgroundBlurred, background: customBackground, backgroundColor, patternColor,
+      background: customBackground,
+      backgroundColor, patternColor,
     } = global.settings.themes[theme] || {};
 
     const {
@@ -735,7 +721,6 @@ export default memo(withGlobal<OwnProps>(
       patternColor,
       isLeftColumnShown,
       isRightColumnShown: selectIsRightColumnShown(global, isMobile),
-      isBackgroundBlurred,
       hasActiveMiddleSearch: Boolean(selectCurrentMiddleSearch(global)),
       isSelectModeActive: selectIsInSelectMode(global),
       isSeenByModalOpen: Boolean(seenByModal),

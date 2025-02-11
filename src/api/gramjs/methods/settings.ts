@@ -175,28 +175,18 @@ export async function deleteProfilePhotos(photos: ApiPhoto[]) {
 
 export async function fetchWallpapers() {
   const result = await invokeRequest(new GramJs.account.GetWallPapers({ hash: BigInt('0') }));
-
   if (!result || result instanceof GramJs.account.WallPapersNotModified) {
     return undefined;
   }
 
-  const filteredWallpapers = result.wallpapers.filter((wallpaper) => {
-    if (
-      !(wallpaper instanceof GramJs.WallPaper)
-      || !(wallpaper.document instanceof GramJs.Document)
-    ) {
-      return false;
+  result.wallpapers.forEach((wallpaper) => {
+    if (wallpaper instanceof GramJs.WallPaper) {
+      localDb.documents[String(wallpaper.document.id)] = wallpaper.document as GramJs.Document;
     }
-
-    return !wallpaper.pattern && wallpaper.document.mimeType !== 'application/x-tgwallpattern';
-  }) as GramJs.WallPaper[];
-
-  filteredWallpapers.forEach((wallpaper) => {
-    localDb.documents[String(wallpaper.document.id)] = wallpaper.document as GramJs.Document;
   });
 
   return {
-    wallpapers: filteredWallpapers.map(buildApiWallpaper).filter(Boolean),
+    wallpapers: result.wallpapers.map(buildApiWallpaper),
   };
 }
 
