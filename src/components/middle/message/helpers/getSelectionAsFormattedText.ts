@@ -15,9 +15,13 @@ const ALLOWED_QUOTE_ENTITIES = new Set([
 
 export function getSelectionAsFormattedText(range: Range) {
   const html = getSelectionAsHtml(range);
-  const formattedText = parseHtmlAsFormattedText(html, false, true);
+  const formattedText = parseHtmlAsFormattedText(html.html, false, true);
+  const unescapeFormattedText = stripEntitiesForQuote(parseHtmlAsFormattedText(html.unescapeHtml, false, true));
 
-  return stripEntitiesForQuote(formattedText);
+  return {
+    text: stripEntitiesForQuote(formattedText),
+    unescapeText: unescapeFormattedText 
+  };
 }
 
 function getSelectionAsHtml(range: Range) {
@@ -27,10 +31,13 @@ function getSelectionAsHtml(range: Range) {
   const html = wrapHtmlWithMarkupTags(range, div.innerHTML);
   div.innerHTML = '';
 
-  return html
+  return {
+    html: html
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/&nbsp;/gi, ' ') // Convert nbsp's to spaces
-    .replace(/\u00a0/gi, ' ');
+    .replace(/\u00a0/gi, ' '), 
+    unescapeHtml: html
+  };
 }
 
 function stripEntitiesForQuote(text: ApiFormattedText): ApiFormattedText {

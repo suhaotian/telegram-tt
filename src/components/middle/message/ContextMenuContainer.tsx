@@ -363,8 +363,8 @@ const ContextMenuContainer: FC<OwnProps & StateProps> = ({
     const selectionText = getSelectionAsFormattedText(selectionRange);
 
     setCanQuoteSelection(
-      selectionText.text.trim().length > 0
-      && message.content.text!.text!.includes(selectionText.text),
+      selectionText.text.text.trim().length > 0
+      && message.content.text!.text!.includes(selectionText.text.text),
     );
   }, [
     selectionRange, selectionRange?.collapsed, selectionRange?.startOffset, selectionRange?.endOffset,
@@ -397,11 +397,12 @@ const ContextMenuContainer: FC<OwnProps & StateProps> = ({
   const handleReply = useLastCallback(() => {
     const quoteText = canQuoteSelection && selectionRange ? getSelectionAsFormattedText(selectionRange) : undefined;
     if (!canReplyInChat) {
-      openReplyMenu({ fromChatId: message.chatId, messageId: message.id, quoteText });
+      openReplyMenu({ fromChatId: message.chatId, messageId: message.id, quoteText: quoteText?.text });
     } else {
       updateDraftReplyInfo({
         replyToMsgId: message.id,
-        quoteText,
+        quoteText: quoteText?.text,
+        quoteUnescapeText: quoteText?.unescapeText.text,
         replyToPeerId: undefined,
       });
     }

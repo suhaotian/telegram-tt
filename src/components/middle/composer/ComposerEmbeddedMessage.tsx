@@ -1,6 +1,6 @@
 import type { FC } from '../../../lib/teact/teact';
 import React, {
-  memo, useEffect, useMemo, useRef,
+  memo, useEffect, useMemo, useRef, useState,
 } from '../../../lib/teact/teact';
 import { getActions, withGlobal } from '../../../global';
 
@@ -42,6 +42,7 @@ import Button from '../../ui/Button';
 import Menu from '../../ui/Menu';
 import MenuItem from '../../ui/MenuItem';
 import MenuSeparator from '../../ui/MenuSeparator';
+import QuoteUpdateModal from './QuoteUpdateModal';
 
 import './ComposerEmbeddedMessage.scss';
 
@@ -86,6 +87,7 @@ const ComposerEmbeddedMessage: FC<OwnProps & StateProps> = ({
   noCaptions,
   forwardsHaveCaptions,
   shouldForceShowEditing,
+  messageListType,
   isCurrentUserPremium,
   isContextMenuDisabled,
   isReplyToDiscussion,
@@ -94,6 +96,7 @@ const ComposerEmbeddedMessage: FC<OwnProps & StateProps> = ({
   shouldPreventComposerAnimation,
   senderChat,
   chatId,
+  threadId,
   currentUserId,
   isSenderChannel,
 }) => {
@@ -165,9 +168,6 @@ const ComposerEmbeddedMessage: FC<OwnProps & StateProps> = ({
   const focusMessageFromDraft = () => {
     focusMessage({ chatId: message!.chatId, messageId: message!.id, noForumTopicPanel: true });
   };
-  const handleMessageClick = useLastCallback((e: React.MouseEvent): void => {
-    handleContextMenu(e);
-  });
 
   const handleClearClick = useLastCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>): void => {
     e.stopPropagation();
@@ -183,7 +183,7 @@ const ComposerEmbeddedMessage: FC<OwnProps & StateProps> = ({
   const handleForwardToAnotherChatClick = useLastCallback(buildAutoCloseMenuItemHandler(changeRecipient));
   const handleShowMessageClick = useLastCallback(buildAutoCloseMenuItemHandler(focusMessageFromDraft));
   const handleRemoveQuoteClick = useLastCallback(buildAutoCloseMenuItemHandler(
-    () => updateDraftReplyInfo({ quoteText: undefined }),
+    () => updateDraftReplyInfo({ quoteText: undefined, quoteUnescapeText: undefined }),
   ));
   const handleChangeReplyRecipientClick = useLastCallback(buildAutoCloseMenuItemHandler(changeRecipient));
   const handleReplyInSenderChat = useLastCallback(() => {
@@ -244,9 +244,19 @@ const ComposerEmbeddedMessage: FC<OwnProps & StateProps> = ({
 
   const renderingLeftIcon = useCurrentOrPrev(leftIcon, true);
 
-  if (!shouldRender) {
-    return undefined;
-  }
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  useEffect(() => {
+    if (!shouldRender) {
+      setIsModalOpen(false);
+    }
+  }, [setIsModalOpen, shouldRender]);
+
+  const handleMessageClick = useLastCallback((e: React.MouseEvent): void => {
+    if (editingId) return handleShowMessageClick();
+    setIsModalOpen(true);
+  });
+
+  if (!shouldRender) return undefined;
 
   const canReplyInSenderChat = sender && !isSenderChannel && chatId !== sender.id && sender.id !== currentUserId;
 
@@ -255,7 +265,7 @@ const ComposerEmbeddedMessage: FC<OwnProps & StateProps> = ({
       <div className={innerClassName}>
         <div className="embedded-left-icon" onClick={handleContextMenu}>
           {renderingLeftIcon && <Icon name={renderingLeftIcon} />}
-          {Boolean(replyInfo?.quoteText) && (
+          {isReplyWithQuote && (
             <Icon name="quote" className="quote-reply" />
           )}
         </div>
@@ -282,6 +292,15 @@ const ComposerEmbeddedMessage: FC<OwnProps & StateProps> = ({
         >
           <Icon name="close" />
         </Button>
+
+        <QuoteUpdateModal 
+          isOpen={isModalOpen} 
+          setIsOpen={setIsModalOpen}
+          chatId={chatId} 
+          threadId={threadId} 
+          shouldForceShowEditing={shouldForceShowEditing}
+          messageListType={messageListType} />
+
         {(isShowingReply || isForwarding) && !isContextMenuDisabled && (
           <Menu
             isOpen={isContextMenuOpen}

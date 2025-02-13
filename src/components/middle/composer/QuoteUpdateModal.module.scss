@@ -1,0 +1,95 @@
+
+.modalContainer {
+  :global {
+    .Message {
+      .EmbeddedMessage, 
+      .MessageMeta, 
+      .sender-title {
+        cursor: default;
+      }
+      .ripple-container,
+      &.is-forwarding .CommentButton {
+        display: none;
+      }
+      .embedded-text-wrapper {
+        user-select: none;
+      }
+      .interactive, .media-inner, a {
+        pointer-events: none;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .modal-dialog {
+        max-width: 98% !important;
+      }
+    }
+  }
+}
+
+.modalHeader {
+  padding: 0.75rem 1rem;
+  margin: 0;
+}
+
+.chatContainer {
+  position: relative;
+  margin-bottom: 0.25rem;
+}
+
+.chatContent {
+  padding: 0.5rem 1rem 0;
+  max-height: min(38vh, 400px);
+  overflow-y: auto;
+
+  @media screen and (min-width: 600px) {
+    max-height: 50vh;
+  }
+}
+
+
+.noAuthors {
+  :global(.Message .message-title), 
+  :global(.Message .message-signature) {
+    display: none !important;
+  }
+}
+
+
+.noCaptions {
+  :global(.Message .media-inner + .text-content),
+  :global(.Message .MessageMeta),
+  :global(.Message .svg-appendix) {
+    display: none !important;
+  }
+  :global(.Message .message-content.media) {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.noSelect {
+  :global(.Message .text-content) {
+    user-select: none;
+  }
+}
+
+.sectionHelp {
+  :global(.ListItem-button ) {
+    word-break: break-word;
+    white-space: break-spaces;
+    border-radius: 0;
+    font-size: 14px;
+  }
+}
+
+.buttonGroup {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.75rem 1rem;
+
+  :global(button) {
+    margin-left: 0.5rem;
+  }
+}
