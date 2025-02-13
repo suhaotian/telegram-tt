@@ -397,7 +397,11 @@ const ContextMenuContainer: FC<OwnProps & StateProps> = ({
   const handleReply = useLastCallback(() => {
     const quoteText = canQuoteSelection && selectionRange ? getSelectionAsFormattedText(selectionRange) : undefined;
     if (!canReplyInChat) {
-      openReplyMenu({ fromChatId: message.chatId, messageId: message.id, quoteText: quoteText?.text });
+      openReplyMenu({ 
+        fromChatId: message.chatId, messageId: message.id, quoteText: 
+        quoteText?.text, 
+        quoteUnescapeText: quoteText?.unescapeText.text, 
+      });
     } else {
       updateDraftReplyInfo({
         replyToMsgId: message.id,

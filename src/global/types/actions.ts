@@ -1719,6 +1719,7 @@ export interface ActionPayloads {
     fromChatId: string;
     messageId?: number;
     quoteText?: ApiFormattedText;
+    quoteUnescapeText?: string;
   } & WithTabId;
 
   // Forwards

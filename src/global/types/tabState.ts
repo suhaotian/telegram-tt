@@ -347,6 +347,7 @@ export type TabState = {
     fromChatId?: string;
     messageId?: number;
     quoteText?: ApiFormattedText;
+    quoteUnescapeText?: string;
     toChatId?: string;
     toThreadId?: ThreadId;
   };

@@ -1940,6 +1940,7 @@ addActionHandler('openChatOrTopicWithReplyInDraft', (global, actions, payload): 
     replyToTopId: replyingInfo.toThreadId,
     replyToPeerId: currentChatId,
     quoteText: replyingInfo.quoteText,
+    quoteUnescapeText: replyingInfo.quoteUnescapeText,
   } as ApiInputMessageReplyInfo;
 
   const currentReplyInfo = replyingInfo.messageId
