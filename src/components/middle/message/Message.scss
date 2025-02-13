@@ -401,6 +401,10 @@
   &.is-selected {
     .message-select-control {
       background: var(--color-green);
+      
+      .icon {
+        font-weight: bold;
+      }
 
       &.group-select {
         background: transparent;

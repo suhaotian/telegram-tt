@@ -198,6 +198,7 @@ type MessagePositionProperties = {
 type OwnProps =
   {
     message: ApiMessage;
+    isPreviewMode?: boolean;
     observeIntersectionForBottom: ObserveFn;
     observeIntersectionForLoading: ObserveFn;
     observeIntersectionForPlaying: ObserveFn;
@@ -316,8 +317,11 @@ const NO_MEDIA_CORNERS_THRESHOLD = 18;
 const QUICK_REACTION_SIZE = 1.75 * REM;
 const EXTRA_SPACE_FOR_REACTIONS = 2.25 * REM;
 
+const onNoop = () => {};
+
 const Message: FC<OwnProps & StateProps> = ({
   message,
+  isPreviewMode,
   observeIntersectionForBottom,
   observeIntersectionForLoading,
   observeIntersectionForPlaying,
@@ -541,7 +545,7 @@ const Message: FC<OwnProps & StateProps> = ({
     !(isContextMenuShown || isInSelectMode || isForwarding)
     && !isInDocumentGroupNotLast
     && !isStoryMention
-    && !((sticker || hasAnimatedEmoji) && asForwarded)
+    && !((sticker || hasAnimatedEmoji) && asForwarded) && !isPreviewMode
   );
   const canForward = isChannel && !isScheduled && message.isForwardingAllowed
   && !isChatProtected;
@@ -683,6 +687,7 @@ const Message: FC<OwnProps & StateProps> = ({
 
   const containerClassName = buildClassName(
     'Message message-list-item',
+    isPreviewMode && 'is-preview',
     isFirstInGroup && 'first-in-group',
     isProtected && !hasTextContent ? 'is-protected' : 'allow-selection',
     isLastInGroup && 'last-in-group',
@@ -957,7 +962,7 @@ const Message: FC<OwnProps & StateProps> = ({
   }
 
   const renderQuickReactionButton = useCallback(() => {
-    if (!defaultReaction) return undefined;
+    if (!defaultReaction || isPreviewMode) return undefined;
 
     return (
       <div
@@ -975,7 +980,7 @@ const Message: FC<OwnProps & StateProps> = ({
     );
   }, [
     hasActiveReactions, availableReactions, defaultReaction, handleSendQuickReaction, isQuickReactionVisible,
-    observeIntersectionForPlaying,
+    observeIntersectionForPlaying, isPreviewMode
   ]);
 
   function renderReactionsAndMeta() {
@@ -988,21 +993,21 @@ const Message: FC<OwnProps & StateProps> = ({
         repliesThreadInfo={repliesThreadInfo}
         outgoingStatus={outgoingStatus}
         signature={signature}
-        withReactionOffset={reactionsPosition === 'inside'}
+        withReactionOffset={reactionsPosition === 'inside' && !isPreviewMode}
         renderQuickReactionButton={
-          withQuickReactionButton && quickReactionPosition === 'in-meta' ? renderQuickReactionButton : undefined
+          withQuickReactionButton && quickReactionPosition === 'in-meta' && !isPreviewMode ? renderQuickReactionButton : undefined
         }
         availableReactions={availableReactions}
         isTranslated={Boolean(requestedTranslationLanguage ? currentTranslatedText : undefined)}
         effectEmoji={effect?.emoticon}
-        onClick={handleMetaClick}
+        onClick={isPreviewMode ? onNoop : handleMetaClick}
         onEffectClick={handleEffectClick}
         onTranslationClick={handleTranslationClick}
         onOpenThread={handleOpenThread}
       />
     );
 
-    if (reactionsPosition !== 'inside') {
+    if (reactionsPosition !== 'inside' || isPreviewMode) {
       return meta;
     }
 
@@ -1038,14 +1043,14 @@ const Message: FC<OwnProps & StateProps> = ({
     const shouldReadMedia = !hasTtl || !isOwn || isChatWithSelf;
 
     return (
-      <div className={className} onDoubleClick={handleContentDoubleClick} dir="auto">
+      <div className={className} onDoubleClick={isPreviewMode ? undefined : handleContentDoubleClick} dir="auto">
         {!asForwarded && shouldRenderSenderName() && renderSenderName()}
         {hasSubheader && (
           <div className="message-subheader">
             {hasTopicChip && (
               <TopicChip
                 topic={messageTopic}
-                onClick={handleTopicChipClick}
+                onClick={isPreviewMode ? undefined : handleTopicChipClick}
                 className="message-topic"
               />
             )}
@@ -1070,7 +1075,7 @@ const Message: FC<OwnProps & StateProps> = ({
                 requestedChatTranslationLanguage={requestedChatTranslationLanguage}
                 observeIntersectionForLoading={observeIntersectionForLoading}
                 observeIntersectionForPlaying={observeIntersectionForPlaying}
-                onClick={handleReplyClick}
+                onClick={isPreviewMode ? onNoop : handleReplyClick}
               />
             )}
             {hasStoryReply && (
@@ -1080,7 +1085,7 @@ const Message: FC<OwnProps & StateProps> = ({
                 noUserColors={noUserColors}
                 isProtected={isProtected}
                 observeIntersectionForLoading={observeIntersectionForLoading}
-                onClick={handleStoryClick}
+                onClick={isPreviewMode ? onNoop : handleStoryClick}
               />
             )}
           </div>
@@ -1483,7 +1488,7 @@ const Message: FC<OwnProps & StateProps> = ({
               )}
               <span
                 className="sender-title"
-                onClick={handleSenderClick}
+                onClick={isPreviewMode ? undefined : handleSenderClick}
               >
                 {senderTitle ? renderText(senderTitle) : (asForwarded ? NBSP : undefined)}
               </span>
@@ -1546,7 +1551,7 @@ const Message: FC<OwnProps & StateProps> = ({
       onCopy={isProtected ? stopEvent : undefined}
       onMouseDown={handleMouseDown}
       onClick={handleClick}
-      onContextMenu={handleContextMenu}
+      onContextMenu={isPreviewMode ? undefined : handleContextMenu}
       onDoubleClick={handleDoubleClick}
       onMouseEnter={isInDocumentGroupNotLast ? handleDocumentGroupMouseEnter : undefined}
       onMouseMove={withQuickReactionButton ? handleMouseMove : undefined}
@@ -1565,7 +1570,7 @@ const Message: FC<OwnProps & StateProps> = ({
       />
       {!isInDocumentGroup && (
         <div className="message-select-control">
-          {isSelected && <Icon name="select" />}
+          {isSelected && <Icon name="check" />}
         </div>
       )}
       {isLastInDocumentGroup && (
@@ -1574,7 +1579,7 @@ const Message: FC<OwnProps & StateProps> = ({
           onClick={handleDocumentGroupSelectAll}
         >
           {isGroupSelected && (
-            <Icon name="select" />
+            <Icon name="check" />
           )}
         </div>
       )}
@@ -1631,7 +1636,7 @@ const Message: FC<OwnProps & StateProps> = ({
           {withCommentButton && (
             <CommentButton
               threadInfo={repliesThreadInfo}
-              disabled={noComments}
+              disabled={noComments || isPreviewMode}
               isLoading={isLoadingComments}
               isCustomShape={isCustomShape}
             />
