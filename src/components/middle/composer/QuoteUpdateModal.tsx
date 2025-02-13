@@ -14,9 +14,6 @@ import {
   selectChat,
   selectChatMessage,
   selectDraft,
-  selectEditingId,
-  selectEditingMessage,
-  selectEditingScheduledId,
   selectForwardedSender,
   selectIsChatWithSelf,
   selectIsCurrentUserPremium,
@@ -43,6 +40,9 @@ import useDerivedSignal from '../../../hooks/useDerivedSignal';
 import ListItem from '../../ui/ListItem';
 import { getSelectionAsFormattedText } from '../message/helpers/getSelectionAsFormattedText';
 import styles from './QuoteUpdateModal.module.scss';
+import { getAllNodesAndText } from '../../../util/getAllNodesAndText';
+
+const onNoop = () => {};
 
 type StateProps = {
   replyInfo?: ApiInputMessageReplyInfo;
@@ -85,6 +85,7 @@ const QuoteUpdateModal: FC<OwnProps & StateProps> = ({
   chatId,
   currentUserId,
   isSenderChannel,
+  messageListType,
 }) => {
   const {
     resetDraftReplyInfo,
@@ -133,6 +134,21 @@ const QuoteUpdateModal: FC<OwnProps & StateProps> = ({
     openChatOrTopicWithReplyInDraft({ chatId: sender.id });
   });
 
+  const closeModal = useLastCallback(() => {
+    setIsOpen(false);
+  })
+  const onSave = useLastCallback(() => {
+    if (quoteRange) {
+      const quoteText = getSelectionAsFormattedText(quoteRange);
+      updateDraftReplyInfo({
+        quoteText: quoteText?.text,
+        quoteUnescapeText: quoteText?.unescapeText.text,
+      });
+    } else if (replyInfo?.quoteText?.text) {
+      handleRemoveQuoteClick()
+    }
+    closeModal();
+  })
   const [isShownModal, markIsShownModal, unmarkIsShownModal] = useFlag();
   useEffect(() => {
     if (isOpen) {
@@ -142,11 +158,11 @@ const QuoteUpdateModal: FC<OwnProps & StateProps> = ({
 
   const handleModalCloseCb = (cb: Function) => {
     cb();
-    setIsOpen(false);
+    closeModal()
   }
   const handleDoNotClick = useLastCallback((e: React.MouseEvent<HTMLElement, MouseEvent>): void => {
     clearEmbedded();
-    setIsOpen(false);
+    closeModal()
   });
 
   const { isMobile } = useAppLayout();
@@ -170,83 +186,49 @@ const QuoteUpdateModal: FC<OwnProps & StateProps> = ({
   const [quoteRange, setQuoteRange] = useState<Range>()
 
   useEffect(() => {
-    if (isOpen) {
-      if (replyInfo && replyInfo?.quoteText?.text) {
-        function getAllNodesAndText(element: HTMLElement | ChildNode) {
-          const result: {
-            node: HTMLElement | ChildNode;
-            startPos: number;
-            text: string | null;
-            length: number;
-          }[] = [];
-          let currentTextContent = '';
-          
-          function traverse(node: HTMLElement | ChildNode) {
-            if (node.nodeType === Node.TEXT_NODE) {
-              const text = node.textContent;
-              result.push({
-                  node: node,
-                  startPos: currentTextContent.length,
-                  text: text,
-                  length: text!.length
-              });
-              currentTextContent += text;
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-              for (let child of node.childNodes) {
-                  traverse(child);
-              }
-            }
-          }
-        
-          traverse(element);
-          return { nodes: result, fullText: currentTextContent };
-        }
+    if (!isOpen) return;
+    if (!replyInfo?.quoteText?.text) return;
 
-        // Get combined text content and find the position of the 10th word
-        const textElement = document.querySelector(`#message-${replyInfo.replyToMsgId} .text-content`) as HTMLElement;
-        const textToSelect = replyInfo?.quoteUnescapeText || replyInfo?.quoteText?.text;
-        if (!textToSelect) return;
-        const { nodes, fullText } = getAllNodesAndText(textElement);
-            
-        // Find the position of the text to select
-        const startPos = fullText.indexOf(textToSelect);
-        if (startPos === -1) return;
-        
-        const endPos = startPos + textToSelect.length;
-        
-        // Find the nodes and offsets for selection
-        let startNode, endNode, startOffset, endOffset;
-        
-        for (let info of nodes) {
-          const nodeEndPos = info.startPos + info.length;
-          
-          // Find start node and offset
-          if (!startNode && startPos >= info.startPos && startPos < nodeEndPos) {
-            startNode = info.node;
-            startOffset = startPos - info.startPos;
-          }
-          
-          // Find end node and offset
-          if (!endNode && endPos > info.startPos && endPos <= nodeEndPos) {
-            endNode = info.node;
-            endOffset = endPos - info.startPos;
-          }
-          
-          if (startNode && endNode) break;
-        }
-        
-        // Create and apply the selection
-        if (startNode && endNode) {
-          const range = document.createRange();
-          range.setStart(startNode, startOffset as number);
-          range.setEnd(endNode, endOffset as number);
-          
-          const selection = window.getSelection();
-          selection!.removeAllRanges();
-          selection!.addRange(range);
-        }
+    const textElement = document.querySelector(`#message-${replyInfo.replyToMsgId} .text-content`) as HTMLElement;
+    const textToSelect = replyInfo?.quoteUnescapeText || replyInfo?.quoteText?.text;
+    if (!textToSelect) return;
+    
+    const { nodes, fullText } = getAllNodesAndText(textElement);
+    // Find the position of the text to select
+    const startPos = fullText.indexOf(textToSelect);
+    if (startPos === -1) return;
+    
+    const endPos = startPos + textToSelect.length;
+    
+    // Find the nodes and offsets for selection
+    let startNode!: HTMLElement | ChildNode, endNode!: HTMLElement | ChildNode, 
+        startOffset!: number, endOffset!: number;
+    
+    for (let info of nodes) {
+      const nodeEndPos = info.startPos + info.length;
+      // Find start node and offset
+      if (!startNode && startPos >= info.startPos && startPos < nodeEndPos) {
+        startNode = info.node;
+        startOffset = startPos - info.startPos;
       }
+      // Find end node and offset
+      if (!endNode && endPos > info.startPos && endPos <= nodeEndPos) {
+        endNode = info.node;
+        endOffset = endPos - info.startPos;
+      }
+      if (startNode && endNode) break;
     }
+    // Create and apply the selection
+    if (startNode && endNode) {
+      const range = document.createRange();
+      range.setStart(startNode, startOffset as number);
+      range.setEnd(endNode, endOffset as number);
+      
+      const selection = window.getSelection();
+      selection!.removeAllRanges();
+      selection!.addRange(range);
+    }
+  
   }, [isOpen, replyInfo?.quoteText?.text]);
 
   useEffect(() => {
@@ -264,13 +246,12 @@ const QuoteUpdateModal: FC<OwnProps & StateProps> = ({
 
   const canReplyInSenderChat = sender && !isSenderChannel && chatId !== sender.id && sender.id !== currentUserId;
   if (!isOpen && !isShownModal) return null;
+
   return (
     <Modal
       isOpen={isOpen}
       className={styles.modalContainer}
-      onClose={() => {
-        setIsOpen(false);
-      }}
+      onClose={closeModal}
       contentClassName='p-0'
       onCloseAnimationEnd={unmarkIsShownModal}
     >
@@ -307,12 +288,10 @@ const QuoteUpdateModal: FC<OwnProps & StateProps> = ({
                       observeIntersectionForBottom={observeIntersectionForReading}
                       observeIntersectionForLoading={observeIntersectionForLoading}
                       observeIntersectionForPlaying={observeIntersectionForPlaying}
-                      noAvatars={false}
-                      withAvatar={true}
-                      withSenderName={true}
+                      withSenderName={noAuthors}
                       threadId={1}
-                      messageListType={'thread'}
-                      noComments={false}
+                      messageListType={messageListType}
+                      noComments={isForwarding}
                       noReplies={false}
                       appearanceOrder={1}
                       isJustAdded={true}
@@ -322,7 +301,7 @@ const QuoteUpdateModal: FC<OwnProps & StateProps> = ({
                       isLastInDocumentGroup={true}
                       isLastInList={true}
                       memoFirstUnreadIdRef={{current: undefined}}
-                      onIntersectPinnedMessage={() => {}}
+                      onIntersectPinnedMessage={onNoop}
                       getIsMessageListReady={getIsReady}
                     />
                 )
@@ -409,7 +388,6 @@ const QuoteUpdateModal: FC<OwnProps & StateProps> = ({
             </ListItem>
           </>
         )}
-        {/* Forward buttons: Hide sender name / Change recipient / do not forward */}
 
         <ListItem disabled focus className={styles.sectionHelp}>
           {isForwarding ? <span>{oldLang(forwardedMessagesCount > 1 ? 'lng_forward_many_about' : 'lng_forward_about')}</span> : <span>{oldLang('lng_reply_about_quote')}</span>}
@@ -420,24 +398,11 @@ const QuoteUpdateModal: FC<OwnProps & StateProps> = ({
             className="confirm-dialog-button"
             isText
             size="smaller"
-            onClick={() => {
-              setIsOpen(false);
-            }}>
+            onClick={closeModal}>
               {lang('Cancel')}
           </Button>
-          <Button size="smaller" className="confirm-dialog-button" isText onClick={() => {
-            if (quoteRange) {
-              const quoteText = getSelectionAsFormattedText(quoteRange);
-              updateDraftReplyInfo({
-                quoteText: quoteText?.text,
-                quoteUnescapeText: quoteText?.unescapeText.text,
-              });
-            } else if (replyInfo?.quoteText?.text) {
-              handleRemoveQuoteClick()
-            }
-            setIsOpen(false);
-          }}>
-            {!quoteRange ? oldLang('lng_settings_save') : oldLang('lng_reply_quote_selected')}
+          <Button size="smaller" className="confirm-dialog-button" isText onClick={onSave}>
+            {!quoteRange && !replyInfo?.quoteText?.text ? oldLang('lng_settings_save') : oldLang('lng_reply_quote_selected')}
           </Button>
         </div>
     </Modal>
@@ -446,7 +411,7 @@ const QuoteUpdateModal: FC<OwnProps & StateProps> = ({
 
 export default memo(withGlobal<OwnProps>(
   (global, {
-    shouldForceShowEditing, chatId, threadId, messageListType,
+    shouldForceShowEditing, chatId, threadId,
   }): StateProps => {
     const {
       forwardMessages: {
@@ -454,9 +419,6 @@ export default memo(withGlobal<OwnProps>(
       },
     } = selectTabState(global);
 
-    const editingId = messageListType === 'scheduled'
-      ? selectEditingScheduledId(global, chatId)
-      : selectEditingId(global, chatId, threadId);
     const isForwarding = toChatId === chatId;
     const forwardedMessages = forwardMessageIds?.map((id) => {
       const msg = selectChatMessage(global, fromChatId!, id)!;
@@ -483,9 +445,7 @@ export default memo(withGlobal<OwnProps>(
     const senderChat = replyToPeerId ? selectChat(global, replyToPeerId) : undefined;
 
     let message: ApiMessage | undefined;
-    if (editingId) {
-      message = selectEditingMessage(global, chatId, threadId, messageListType);
-    } else if (isForwarding && forwardMessageIds!.length === 1) {
+    if (isForwarding && forwardMessageIds!.length === 1) {
       message = forwardedMessages?.[0];
     } else if (replyInfo && !shouldForceShowEditing) {
       message = selectChatMessage(global, replyInfo.replyToPeerId || chatId, replyInfo.replyToMsgId);
