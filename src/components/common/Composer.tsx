@@ -389,7 +389,7 @@ const Composer: FC<OwnProps & StateProps> = ({
 }) => {
   const {
     sendMessage,
-    clearDraft,
+    clearDraft: _clearDraft,
     showDialog,
     forwardMessages,
     openPollModal,
@@ -415,6 +415,20 @@ const Composer: FC<OwnProps & StateProps> = ({
   } = getActions();
 
   const lang = useOldLang();
+
+
+  const [resetHistoryKey, setResetHistoryKey] = useState(0);
+  const clearMessageInputHistory = useLastCallback(() => {
+    setResetHistoryKey(resetHistoryKey+1);
+  });
+  const clearDraft = useLastCallback((
+    payload: Parameters<typeof _clearDraft>[0], 
+    options?: Parameters<typeof _clearDraft>[1]
+  ) => {
+    _clearDraft(payload, options);
+    clearMessageInputHistory();
+  })
+
 
   // eslint-disable-next-line no-null/no-null
   const inputRef = useRef<HTMLDivElement>(null);
@@ -1831,6 +1845,7 @@ const Composer: FC<OwnProps & StateProps> = ({
             id={inputId}
             editableInputId={editableInputId}
             customEmojiPrefix={type}
+            resetHistoryKey={resetHistoryKey}
             isStoryInput={isInStoryViewer}
             chatId={chatId}
             canSendPlainText={!isComposerBlocked}

@@ -678,6 +678,7 @@ const AttachmentModal: FC<OwnProps & StateProps> = ({
               id={ATTACHMENT_MODAL_INPUT_ID}
               chatId={chatId}
               threadId={threadId}
+              resetHistoryKey={isOpen ? 1 : 2}
               isAttachmentModalInput
               customEmojiPrefix="attachment"
               isReady={isReady}

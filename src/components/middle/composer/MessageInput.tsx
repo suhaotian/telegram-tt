@@ -37,6 +37,7 @@ import Icon from '../../common/icons/Icon';
 import Button from '../../ui/Button';
 import TextTimer from '../../ui/TextTimer';
 import TextFormatter from './TextFormatter.async';
+import { SAFARI_BR, useMessageInputHistory } from './hooks/useMessageInputHistory';
 
 const CONTEXT_MENU_CLOSE_DELAY_MS = 100;
 // Focus slows down animation, also it breaks transition layout in Chrome
@@ -51,6 +52,7 @@ type OwnProps = {
   id: string;
   chatId: string;
   threadId: ThreadId;
+  resetHistoryKey?: number;
   isAttachmentModalInput?: boolean;
   isStoryInput?: boolean;
   customEmojiPrefix: string;
@@ -91,7 +93,6 @@ const TAB_INDEX_PRIORITY_TIMEOUT = 2000;
 const SELECTION_RECALCULATE_DELAY_MS = 260;
 const TEXT_FORMATTER_SAFE_AREA_PX = 140;
 // For some reason Safari inserts `<br>` after user removes text from input
-const SAFARI_BR = '<br>';
 const IGNORE_KEYS = [
   'Esc', 'Escape', 'Enter', 'PageUp', 'PageDown', 'Meta', 'Alt', 'Ctrl', 'ArrowDown', 'ArrowUp', 'Control', 'Shift',
 ];
@@ -113,6 +114,7 @@ const MessageInput: FC<OwnProps & StateProps> = ({
   ref,
   id,
   chatId,
+  resetHistoryKey,
   captionLimit,
   isAttachmentModalInput,
   isStoryInput,
@@ -379,6 +381,10 @@ const MessageInput: FC<OwnProps & StateProps> = ({
     document.addEventListener('keydown', handleCloseContextMenu);
   }
 
+  const {
+    saveHistory, restoreHistory
+  } = useMessageInputHistory({ chatId, resetHistoryKey, inputRef, cloneRef, onUpdate, getHtml });
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     // https://levelup.gitconnected.com/javascript-events-handlers-keyboard-and-load-events-1b3e46a6b0c3#1960
     const { isComposing } = e;
@@ -390,6 +396,15 @@ const MessageInput: FC<OwnProps & StateProps> = ({
         e.preventDefault();
 
         replyToNextMessage({ targetIndexDelta });
+        return;
+      }
+    }
+
+    // Handle undo
+    if (!isComposing && (e.metaKey || e.ctrlKey) && !e.altKey && !isMobileDevice) {
+      if (e.key === 'z') {
+        e.preventDefault();
+        restoreHistory(e.shiftKey ? 1 : -1);
         return;
       }
     }
@@ -417,8 +432,11 @@ const MessageInput: FC<OwnProps & StateProps> = ({
 
   function handleChange(e: ChangeEvent<HTMLDivElement>) {
     const { innerHTML, textContent } = e.currentTarget;
+    const newHtml = innerHTML === SAFARI_BR ? '' : innerHTML;
 
-    onUpdate(innerHTML === SAFARI_BR ? '' : innerHTML);
+    
+    saveHistory(newHtml);
+    onUpdate(newHtml);
 
     // Reset focus on the input to remove any active styling when input is cleared
     if (
