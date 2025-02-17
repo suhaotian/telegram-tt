@@ -22,21 +22,23 @@ const localFolderIconMaps = folderIconsName.reduce((prev, curr) => {
     return prev;
   }, {} as Record<string, FontIconName>);
 
-const FolderIcon: FC<{ folderIcon?: string; folderId?: number }> = ({
+const FolderIcon: FC<{ folderIcon?: string; documentId?: string; folderId?: number; animation?: boolean }> = ({
   folderIcon = '📁',
+  documentId,
   folderId,
+  animation,
 }) => {
+  if (documentId)
+    return <CustomEmoji documentId={documentId} size={32} noPlay={animation} />;
+
   const folderIconName = folderId === ALL_FOLDER_ID ? 'folders_chats' : localFolderIconMaps[folderIcon];
   if (folderIconName) return <Icon name={folderIconName} className='local' />;
 
-  if (folderIcon && /^\d+$/.test(folderIcon))
-    return <CustomEmoji documentId={folderIcon} size={32} />;
-
   const replaceEmoji = folderIcon && renderText(folderIcon);
   if (folderIcon && replaceEmoji !== folderIcon)
-    return <span className='render-emoji' data-emoji={folderIcon}>{replaceEmoji}</span>;
+    return <span className='render-emoji'>{replaceEmoji}</span>;
 
-  return <span className='emoji' data-emoji={folderIcon}>{folderIcon}</span>;
+  return <span className='emoji'>{folderIcon}</span>;
 };
 
 export default FolderIcon;

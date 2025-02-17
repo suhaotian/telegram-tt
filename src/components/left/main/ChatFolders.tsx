@@ -4,7 +4,7 @@ import React, {
 } from '../../../lib/teact/teact';
 import { getActions, getGlobal, withGlobal } from '../../../global';
 
-import type { ApiChatFolder, ApiChatlistExportedInvite, ApiSession } from '../../../api/types';
+import { ApiMessageEntityTypes, type ApiChatFolder, type ApiChatlistExportedInvite, type ApiMessageEntityCustomEmoji, type ApiSession } from '../../../api/types';
 import type { GlobalState } from '../../../global/types';
 import type { FolderEditDispatch } from '../../../hooks/reducers/useFoldersReducer';
 import type { LeftColumnContent, SettingsScreens } from '../../../types';
@@ -197,18 +197,30 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
           },
         });
       }
+      let titleText = folder.title.text;
+      let entities = folder.title.entities;
+      let customEmojiEntity: ApiMessageEntityCustomEmoji | undefined;
+      if (isDesktop) {
+        customEmojiEntity = entities?.filter(item => item.type === ApiMessageEntityTypes.CustomEmoji).pop();
+        if (customEmojiEntity) {
+          const { length, offset } = customEmojiEntity;
+          titleText = titleText.slice(0, offset) + titleText.slice(offset+length,);
+        }
+      }
 
       return {
         id,
         title: <>
           {isDesktop && <div className="Tab_icon">
-            <FolderIcon folderId={id} folderIcon={folder.emoticon} />
+            <FolderIcon folderId={folder.id} folderIcon={folder.emoticon} documentId={customEmojiEntity?.documentId} animation={folder.noTitleAnimations} />
           </div>}
-          {renderTextWithEntities({
-            text: title.text,
-            entities: title.entities,
-            noCustomEmojiPlayback: folder.noTitleAnimations,
-          })}
+          <span className="Tab_text">
+            {renderTextWithEntities({
+              text: titleText,
+              entities,
+              noCustomEmojiPlayback: folder.noTitleAnimations,
+            })}
+          </span>
         </>,
         badgeCount: folderCountersById[id]?.chatsCount,
         isBadgeActive: Boolean(folderCountersById[id]?.notificationsCount),

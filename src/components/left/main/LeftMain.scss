@@ -45,6 +45,14 @@
       flex: 0 0 auto;
     }
 
+
+    .Tab_text {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
     > .Transition {
       flex: 1;
       overflow: hidden;
@@ -126,19 +134,32 @@
               margin-bottom: 6px;
             }
 
+            .custom-emoji {
+              margin-bottom: 2px;
+            }
+
             .render-emoji {
+              display: block;
+              font-size: 28px;
+              line-height: 1;
+              margin-bottom: 6px;
               img {
                 display: block;
                 width: 34px;
                 height: 34px;
                 margin-right: 0;
-                margin-bottom: 6px;
               }
             }
             .custom-emoji {
               --custom-emoji-size: 34px;
             }
           }
+
+          .Tab_text {
+            --emoji-size: 16px;
+            --custom-emoji-size: 20px;
+          }
+
 
           .badge {
             position: absolute;

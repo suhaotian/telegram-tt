@@ -1,6 +1,6 @@
 import { getGlobal } from '../../global';
 
-import type { ApiChatFolder } from '../../api/types';
+import { ApiMessageEntity, ApiMessageEntityTypes, type ApiChatFolder, type ApiMessageEntityCustomEmoji } from '../../api/types';
 import type { IconName } from '../../types/icons';
 import type { Dispatch, StateReducer } from '../useReducer';
 
@@ -114,7 +114,7 @@ export type FoldersState = {
   excludeFilters?: FolderExcludeFilters;
 };
 export type FoldersActions = (
-  'setTitle' | 'setEmoticon' | 'saveFilters' | 'editFolder' | 'reset' | 'setChatFilter' | 'setIsLoading' | 'setError' |
+  'setTitle' | 'setEmoticon' | 'toggleTitleAnimation' | 'saveFilters' | 'editFolder' | 'reset' | 'setChatFilter' | 'setIsLoading' | 'setError' |
   'editIncludeFilters' | 'editExcludeFilters' | 'setIncludeFilters' | 'setExcludeFilters' | 'setIsTouched' |
   'setFolderId' | 'setIsChatlist'
   );
@@ -134,25 +134,81 @@ const foldersReducer: StateReducer<FoldersState, FoldersActions> = (
   state,
   action,
 ): FoldersState => {
+  state.folder.title.entities;
   switch (action.type) {
+    case 'toggleTitleAnimation':
+      return {
+        ...state,
+        folder: {
+          ...state.folder,
+          noTitleAnimations: state.folder.noTitleAnimations ? undefined : true,
+        },
+        isTouched: true,
+      };
     case 'setTitle':
+      {let titleText = action.payload;
+      let entities: ApiMessageEntity[] = state.folder.title.entities ? [...state.folder.title.entities] : [];
+      let lastCustomEmojiIndex = -1;
+      let customEmojiEntity: ApiMessageEntityCustomEmoji | undefined;
+      entities?.forEach((item, index) => {
+        if (item.type === ApiMessageEntityTypes.CustomEmoji) {
+          customEmojiEntity = item;
+          lastCustomEmojiIndex = index;
+        }
+      });
+      if (lastCustomEmojiIndex >= 0) entities.splice(lastCustomEmojiIndex, 1);
+      const emoticon = state.folder.emoticon || '📁';
       return {
         ...state,
         folder: {
           ...state.folder,
-          title: { text: action.payload },
+          title: !customEmojiEntity ? { ...state.folder.title, text: action.payload } : {
+            ...state.folder.title,
+            text: titleText + emoticon,
+            entities: [...entities, {
+              type: ApiMessageEntityTypes.CustomEmoji,
+              documentId: customEmojiEntity.documentId,
+              offset: titleText.length,
+              length: emoticon.length,
+            }]
+          },
         },
         isTouched: true,
-      };
+      };}
     case 'setEmoticon':
+      {let titleText = state.folder.title.text;
+      let entities: ApiMessageEntity[] = [];
+      let customEmojiEntity: ApiMessageEntityCustomEmoji | undefined;
+      state.folder.title.entities?.forEach(item => {
+        if (item.type === ApiMessageEntityTypes.CustomEmoji) customEmojiEntity = item;
+        else entities.push(item);
+      });
+      if (customEmojiEntity) {
+        const { length, offset } = customEmojiEntity;
+        titleText = titleText.slice(0, offset) + titleText.slice(offset+length,);
+      }
       return {
         ...state,
         folder: {
           ...state.folder,
-          emoticon: action.payload,
+          emoticon: action.payload.emoticon,
+          title: action.payload.documentId ? {
+            ...state.folder.title,
+            text: titleText + action.payload.emoticon,
+            entities: [...entities, {
+              type: ApiMessageEntityTypes.CustomEmoji,
+              documentId: action.payload.documentId,
+              offset: titleText.length,
+              length: action.payload.emoticon.length,
+            }]
+          } : {
+            ...state.folder.title,
+            text: titleText,
+            entities,
+          },
         },
         isTouched: true,
-      };
+      };}
     case 'setFolderId':
       return {
         ...state,

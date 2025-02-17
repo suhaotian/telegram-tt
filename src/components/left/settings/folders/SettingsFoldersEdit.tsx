@@ -4,7 +4,7 @@ import React, {
 } from '../../../../lib/teact/teact';
 import { getActions, getGlobal, withGlobal } from '../../../../global';
 
-import type { ApiChatlistExportedInvite } from '../../../../api/types';
+import { ApiMessageEntityTypes, type ApiChatlistExportedInvite, type ApiMessageEntityCustomEmoji } from '../../../../api/types';
 import type {
   FolderEditDispatch,
   FoldersState,
@@ -164,8 +164,12 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
     dispatch({ type: 'setTitle', payload: currentTarget.value.trim() });
   }, [dispatch]);
 
-  const handleEmoticonSelect = useCallback((emoji: string) => {
-    dispatch({ type: 'setEmoticon', payload: emoji });
+  const handleEmoticonSelect = useCallback((emoji: string, documentId?: string) => {
+    dispatch({ type: 'setEmoticon', payload: { emoticon: emoji, documentId } });
+  }, [dispatch]);
+  
+  const handleAnimationToggle = useCallback(() => {
+    dispatch({ type: 'toggleTitleAnimation'  });
   }, [dispatch]);
 
   const handleSubmit = useCallback(() => {
@@ -291,6 +295,18 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
     );
   }
 
+  const { titleText, customEmojiEntity } = useMemo(() => {
+    const { folder } = state;
+    let titleText = folder.title.text;
+    let entities = folder.title.entities;
+    let customEmojiEntity: ApiMessageEntityCustomEmoji | undefined;
+    customEmojiEntity = entities?.filter(item => item.type === ApiMessageEntityTypes.CustomEmoji).pop();
+    if (customEmojiEntity) {
+      const { length, offset } = customEmojiEntity;
+      titleText = titleText.slice(0, offset) + titleText.slice(offset+length,);
+    }
+    return { titleText, customEmojiEntity }
+  }, [state.folder]);
   return (
     <div className="settings-fab-wrapper">
       <div className="custom-scroll no-border settings-content">
@@ -307,10 +323,15 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
               {lang('FilterIncludeInfo')}
             </p>
           )}
+          <div className='settings-folders-animation-toggle-button'
+            dir={lang.isRtl ? 'rtl' : undefined}
+            onClick={handleAnimationToggle}>{
+            state.folder.noTitleAnimations ? lang('lng_filters_enable_animations') : lang('lng_filters_disable_animations')
+          }</div>
           <InputText
             className="mb-0"
             label={lang('FilterNameHint')}
-            value={state.folder.title.text}
+            value={titleText}
             onChange={handleChange}
             error={state.error && state.error === ERROR_NO_TITLE ? ERROR_NO_TITLE : undefined}
           >
@@ -325,6 +346,8 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
               <FolderIcon
                 folderId={state.folderId}
                 folderIcon={state.folder.emoticon}
+                documentId={customEmojiEntity?.documentId}
+                animation={state.folder.noTitleAnimations}
               />
             </Button>
           </InputText>
@@ -332,9 +355,8 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
 
 
         <FolderIconPicker buttonRef={buttonRef} onEmojiSelect={sticker => {
-            const emoji = sticker.isCustomEmoji && sticker.id ? sticker.id : sticker.emoji || '';
-            handleEmoticonSelect(emoji);
-          }} isOpen={isFolderIconPickerOpen} onClose={closeFolderIconPicker}/>
+            handleEmoticonSelect(sticker.emoji as string, sticker.id);
+          }} isOpen={isFolderIconPickerOpen} onClose={closeFolderIconPicker} />
 
         {!isOnlyInvites && (
           <div className="pt-3 settings-item">
