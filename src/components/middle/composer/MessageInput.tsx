@@ -1,4 +1,4 @@
-import type { ChangeEvent, RefObject } from 'react';
+import type { ChangeEvent, CompositionEventHandler, RefObject } from 'react';
 import type { FC } from '../../../lib/teact/teact';
 import React, {
   getIsHeavyAnimating,
@@ -430,12 +430,23 @@ const MessageInput: FC<OwnProps & StateProps> = ({
     }
   }
 
+  const compositionRef = useRef(false);
+  const handleCompositionStart: CompositionEventHandler = (e) => {
+    compositionRef.current = true;
+  }
+  const handleCompositionUpdate: CompositionEventHandler = (e) => {
+    compositionRef.current = true;
+  }
+  const handleCompositionEnd: CompositionEventHandler = (e) => {
+    compositionRef.current = false;
+    if (!isMobileDevice) saveHistory(getHtml());
+  }
+
   function handleChange(e: ChangeEvent<HTMLDivElement>) {
     const { innerHTML, textContent } = e.currentTarget;
     const newHtml = innerHTML === SAFARI_BR ? '' : innerHTML;
 
-    
-    saveHistory(newHtml);
+    if (!compositionRef.current && !isMobileDevice) saveHistory(newHtml);
     onUpdate(newHtml);
 
     // Reset focus on the input to remove any active styling when input is cleared
@@ -599,6 +610,9 @@ const MessageInput: FC<OwnProps & StateProps> = ({
             onClick={focusInput}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            onCompositionStart={handleCompositionStart}
+            onCompositionUpdate={handleCompositionUpdate}
+            onCompositionEnd={handleCompositionEnd}
             onMouseDown={handleMouseDown}
             onContextMenu={IS_ANDROID ? handleAndroidContextMenu : undefined}
             onTouchCancel={IS_ANDROID ? processSelectionWithTimeout : undefined}
