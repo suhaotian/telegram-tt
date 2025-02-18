@@ -22,14 +22,14 @@ const localFolderIconMaps = folderIconsName.reduce((prev, curr) => {
     return prev;
   }, {} as Record<string, FontIconName>);
 
-const FolderIcon: FC<{ folderIcon?: string; documentId?: string; folderId?: number; animation?: boolean }> = ({
+const FolderIcon: FC<{ folderIcon?: string; documentId?: string; folderId?: number; noTitleAnimations?: boolean }> = ({
   folderIcon = '📁',
   documentId,
   folderId,
-  animation,
+  noTitleAnimations,
 }) => {
   if (documentId)
-    return <CustomEmoji documentId={documentId} size={32} noPlay={animation} />;
+    return <CustomEmoji documentId={documentId} size={32} noPlay={noTitleAnimations} />;
 
   const folderIconName = folderId === ALL_FOLDER_ID ? 'folders_chats' : localFolderIconMaps[folderIcon];
   if (folderIconName) return <Icon name={folderIconName} className='local' />;

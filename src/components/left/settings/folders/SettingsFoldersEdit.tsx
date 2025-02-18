@@ -347,7 +347,7 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
                 folderId={state.folderId}
                 folderIcon={state.folder.emoticon}
                 documentId={customEmojiEntity?.documentId}
-                animation={state.folder.noTitleAnimations}
+                noTitleAnimations={state.folder.noTitleAnimations}
               />
             </Button>
           </InputText>

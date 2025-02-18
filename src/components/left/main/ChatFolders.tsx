@@ -212,7 +212,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
         id,
         title: <>
           {isDesktop && <div className="Tab_icon">
-            <FolderIcon folderId={folder.id} folderIcon={folder.emoticon} documentId={customEmojiEntity?.documentId} animation={folder.noTitleAnimations} />
+            <FolderIcon folderId={folder.id} folderIcon={folder.emoticon} documentId={customEmojiEntity?.documentId} noTitleAnimations={folder.noTitleAnimations} />
           </div>}
           <span className="Tab_text">
             {renderTextWithEntities({
