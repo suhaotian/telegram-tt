@@ -4,7 +4,7 @@ import React, {
 } from '../../../../lib/teact/teact';
 import { getActions, getGlobal, withGlobal } from '../../../../global';
 
-import { ApiMessageEntityTypes, type ApiChatlistExportedInvite, type ApiMessageEntityCustomEmoji } from '../../../../api/types';
+import { type ApiChatlistExportedInvite } from '../../../../api/types';
 import type {
   FolderEditDispatch,
   FoldersState,
@@ -35,6 +35,7 @@ import FolderIcon from "../../../ui/FolderIcon";
 import FolderIconPicker from '../../main/FolderIconPicker.async';
 import useFlag from '../../../../hooks/useFlag';
 import Button from '../../../ui/Button';
+import { getFolderState } from '../helpers/chatFolder';
 
 
 
@@ -159,9 +160,17 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
     onBack,
   });
 
+
+  const { titleText, customEmojiEntity, hasCustomEmoji } = useMemo(() => {
+    const { titleText, customEmojiEntity } = getFolderState(state.folder);
+    return { titleText, customEmojiEntity, hasCustomEmoji: Boolean(customEmojiEntity) }
+  }, [state.folder]);
+    
+
   const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const { currentTarget } = event;
-    dispatch({ type: 'setTitle', payload: currentTarget.value.trim() });
+    const payload = currentTarget.value.trim();
+    dispatch({ type: 'setTitle', payload });
   }, [dispatch]);
 
   const handleEmoticonSelect = useCallback((emoji: string, documentId?: string) => {
@@ -295,18 +304,6 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
     );
   }
 
-  const { titleText, customEmojiEntity } = useMemo(() => {
-    const { folder } = state;
-    let titleText = folder.title.text;
-    let entities = folder.title.entities;
-    let customEmojiEntity: ApiMessageEntityCustomEmoji | undefined;
-    customEmojiEntity = entities?.filter(item => item.type === ApiMessageEntityTypes.CustomEmoji).pop();
-    if (customEmojiEntity) {
-      const { length, offset } = customEmojiEntity;
-      titleText = titleText.slice(0, offset) + titleText.slice(offset+length,);
-    }
-    return { titleText, customEmojiEntity }
-  }, [state.folder]);
   return (
     <div className="settings-fab-wrapper">
       <div className="custom-scroll no-border settings-content">
@@ -323,11 +320,11 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
               {lang('FilterIncludeInfo')}
             </p>
           )}
-          <div className='settings-folders-animation-toggle-button'
+          {hasCustomEmoji && <div className='settings-folders-animation-toggle-button'
             dir={lang.isRtl ? 'rtl' : undefined}
             onClick={handleAnimationToggle}>{
             state.folder.noTitleAnimations ? lang('lng_filters_enable_animations') : lang('lng_filters_disable_animations')
-          }</div>
+          }</div>}
           <InputText
             className="mb-0"
             label={lang('FilterNameHint')}

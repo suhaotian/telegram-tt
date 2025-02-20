@@ -7,6 +7,7 @@ import type { Dispatch, StateReducer } from '../useReducer';
 import { selectChat } from '../../global/selectors';
 import { omit, pick } from '../../util/iteratees';
 import useReducer from '../useReducer';
+import { getFolderState } from '../../components/left/settings/helpers/chatFolder';
 
 export type FolderChatType = {
   icon: IconName;
@@ -134,7 +135,6 @@ const foldersReducer: StateReducer<FoldersState, FoldersActions> = (
   state,
   action,
 ): FoldersState => {
-  state.folder.title.entities;
   switch (action.type) {
     case 'toggleTitleAnimation':
       return {
@@ -146,17 +146,7 @@ const foldersReducer: StateReducer<FoldersState, FoldersActions> = (
         isTouched: true,
       };
     case 'setTitle':
-      {let titleText = action.payload;
-      let entities: ApiMessageEntity[] = state.folder.title.entities ? [...state.folder.title.entities] : [];
-      let lastCustomEmojiIndex = -1;
-      let customEmojiEntity: ApiMessageEntityCustomEmoji | undefined;
-      entities?.forEach((item, index) => {
-        if (item.type === ApiMessageEntityTypes.CustomEmoji) {
-          customEmojiEntity = item;
-          lastCustomEmojiIndex = index;
-        }
-      });
-      if (lastCustomEmojiIndex >= 0) entities.splice(lastCustomEmojiIndex, 1);
+      {const {entities, customEmojiEntity} = getFolderState(state.folder);
       const emoticon = state.folder.emoticon || '📁';
       return {
         ...state,
@@ -164,11 +154,11 @@ const foldersReducer: StateReducer<FoldersState, FoldersActions> = (
           ...state.folder,
           title: !customEmojiEntity ? { ...state.folder.title, text: action.payload } : {
             ...state.folder.title,
-            text: titleText + emoticon,
+            text: action.payload + emoticon,
             entities: [...entities, {
               type: ApiMessageEntityTypes.CustomEmoji,
               documentId: customEmojiEntity.documentId,
-              offset: titleText.length,
+              offset: action.payload.length,
               length: emoticon.length,
             }]
           },
@@ -176,17 +166,7 @@ const foldersReducer: StateReducer<FoldersState, FoldersActions> = (
         isTouched: true,
       };}
     case 'setEmoticon':
-      {let titleText = state.folder.title.text;
-      let entities: ApiMessageEntity[] = [];
-      let customEmojiEntity: ApiMessageEntityCustomEmoji | undefined;
-      state.folder.title.entities?.forEach(item => {
-        if (item.type === ApiMessageEntityTypes.CustomEmoji) customEmojiEntity = item;
-        else entities.push(item);
-      });
-      if (customEmojiEntity) {
-        const { length, offset } = customEmojiEntity;
-        titleText = titleText.slice(0, offset) + titleText.slice(offset+length,);
-      }
+      {const {titleText, entities} = getFolderState(state.folder);
       return {
         ...state,
         folder: {
