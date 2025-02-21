@@ -464,7 +464,7 @@ function processEntity({
       return <strong data-entity-type={entity.type}>{renderNestedMessagePart()}</strong>;
     case ApiMessageEntityTypes.Blockquote:
       return (
-        <Blockquote canBeCollapsible={entity.canCollapse} isToggleDisabled={isInSelectMode}>
+        <Blockquote canBeCollapsible={entity.collapsed} isToggleDisabled={isInSelectMode}>
           {renderNestedMessagePart()}
         </Blockquote>
       );
@@ -650,10 +650,7 @@ function processEntityAsHtml(
     case ApiMessageEntityTypes.CustomEmoji:
       return buildCustomEmojiHtmlFromEntity(rawEntityText, entity);
     case ApiMessageEntityTypes.Blockquote:
-      return `<blockquote
-        class="blockquote"
-        data-entity-type="${ApiMessageEntityTypes.Blockquote}"
-        >${renderedContent}</blockquote>`;
+      return `<blockquote class="blockquote"${entity.collapsed ? ` data-collapsed="1"` : ""} data-entity-type="${ApiMessageEntityTypes.Blockquote}">${renderedContent}</blockquote>`;
     default:
       return renderedContent;
   }

@@ -523,7 +523,7 @@ export type ApiMessageEntityBlockquote = {
   type: ApiMessageEntityTypes.Blockquote;
   offset: number;
   length: number;
-  canCollapse?: boolean;
+  collapsed?: true;
 };
 
 export type ApiMessageEntityCustomEmoji = {

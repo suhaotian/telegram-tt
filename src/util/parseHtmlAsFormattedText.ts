@@ -60,7 +60,6 @@ export default function parseHtmlAsFormattedText(
     recursionDeepness = 1;
     addEntity(node);
   });
-
   return {
     text,
     entities: entities.length ? entities : undefined,
@@ -173,6 +172,19 @@ function getEntityDataFromNode(
         offset,
         length,
         documentId: (node as HTMLImageElement).dataset.documentId!,
+      },
+    };
+  }
+
+  if (type === ApiMessageEntityTypes.Blockquote) {
+    const collapsed = Boolean((node as HTMLQuoteElement).dataset.collapsed);
+    return {
+      index,
+      entity: {
+        type,
+        offset,
+        length,
+        collapsed: collapsed ? collapsed : undefined
       },
     };
   }
