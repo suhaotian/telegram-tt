@@ -65,11 +65,10 @@ export interface ApiAttachment {
 
 export type ApiWallpaper = {
   slug: string;
-  id?: GramJs.WallPaper['id'];
-  idStr: string;
+  id: string;
   document?: ApiDocument;
-  wallpaper?: GramJs.WallPaper;
-  wallpaperNoFile?: GramJs.WallPaperNoFile;
+  wallpaper?: Pick<GramJs.WallPaper, 'className' | 'dark' | 'pattern' | 'default' | 'settings'>;
+  wallpaperNoFile?: Pick<GramJs.WallPaperNoFile, 'className' | 'dark' | 'default' | 'settings'>;
 }
 
 export interface ApiSession {

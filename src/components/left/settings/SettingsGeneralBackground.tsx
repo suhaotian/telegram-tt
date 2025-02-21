@@ -104,12 +104,12 @@ const SettingsGeneralBackground: FC<OwnProps & StateProps> = ({
 
 
   const enableBlur = useMemo(() => {
-    const currentWallpaper = loadedWallpapers?.find(item => item.slug === background || item.idStr === background);
+    const currentWallpaper = loadedWallpapers?.find(item => item.slug === background || item.id === background);
     return needBlur(currentWallpaper);
   }, [loadedWallpapers, background]);
 
   const handleWallPaperSelect = useCallback((id: string) => {
-    const currentWallpaper = loadedWallpapers && loadedWallpapers.find((wallpaper) => wallpaper.idStr === id);
+    const currentWallpaper = loadedWallpapers && loadedWallpapers.find((wallpaper) => wallpaper.id === id);
     const settings = (currentWallpaper?.wallpaper || currentWallpaper?.wallpaperNoFile)?.settings;
 
     setThemeSettings({
@@ -181,10 +181,10 @@ const SettingsGeneralBackground: FC<OwnProps & StateProps> = ({
           {loadedWallpapers.map((wallpaper) => {
             return (
               <WallpaperTile
-                key={wallpaper.idStr}
+                key={wallpaper.id}
                 wallpaper={wallpaper}
                 theme={theme}
-                isSelected={background === wallpaper.idStr || background === wallpaper.slug}
+                isSelected={background === wallpaper.id || background === wallpaper.slug}
                 onClick={handleWallPaperSelect}
               />
             )

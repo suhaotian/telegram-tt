@@ -190,7 +190,7 @@ addActionHandler('uploadWallpaper', async (global, actions, payload): Promise<vo
       ...global.settings,
       loadedWallpapers: [
         {
-          idStr: UPLOADING_WALLPAPER_SLUG,
+          id: UPLOADING_WALLPAPER_SLUG,
           slug: UPLOADING_WALLPAPER_SLUG,
           document: {
             mediaType: 'document',

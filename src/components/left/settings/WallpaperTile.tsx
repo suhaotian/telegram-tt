@@ -40,7 +40,7 @@ const WallpaperTile: FC<OwnProps> = ({
   isSelected,
   onClick,
 }) => {
-  const { idStr, document } = wallpaper;
+  const { id, document } = wallpaper;
   const localMediaHash = `wallpaper${document?.id!}`;
   const localBlobUrl = document?.previewBlobUrl;
   const previewBlobUrl = useMedia(document?.id && `${localMediaHash}?size=m`);
@@ -58,7 +58,7 @@ const WallpaperTile: FC<OwnProps> = ({
   } = useMediaWithLoadProgress(localMediaHash, !isLoadAllowed);
   const wasLoadDisabled = usePreviousDeprecated(isLoadAllowed) === false;
   const { shouldRender: shouldRenderSpinner, transitionClassNames: spinnerClassNames } = useShowTransitionDeprecated(
-    (isLoadAllowed && !fullMedia) || idStr === UPLOADING_WALLPAPER_SLUG,
+    (isLoadAllowed && !fullMedia) || id === UPLOADING_WALLPAPER_SLUG,
     undefined,
     wasLoadDisabled,
     'slow',
@@ -74,9 +74,9 @@ const WallpaperTile: FC<OwnProps> = ({
         blob = await convertTgvFileToBlob(blob);
         await cacheApi.save(CUSTOM_BG_CACHE_NAME, cacheKeyRef.current!, blob);
       }
-      onClick(idStr);
+      onClick(id);
     })();
-  }, [fullMedia, onClick, idStr]);
+  }, [fullMedia, onClick, id]);
 
   useEffect(() => {
     // If we've clicked on a wallpaper, select it when full media is loaded

@@ -29,20 +29,39 @@ import { buildApiPeerId, getApiChatIdFromMtpPeer } from './peers';
 import { buildApiReaction } from './reactions';
 import { buildApiUser } from './users';
 
+function buildWallpaperSettings(settings?: GramJs.WallPaperSettings) {
+  if (!settings) return settings;
+  return pick(settings, ['blur', 'motion', 'backgroundColor', 'secondBackgroundColor', 'thirdBackgroundColor', 'fourthBackgroundColor', 'intensity', 'rotation', 'emoticon']) as GramJs.WallPaperSettings
+}
+
 export function buildApiWallpaper(wallpaper: GramJs.TypeWallPaper): ApiWallpaper {
+  const id = String(wallpaper.id);
+  const settings = buildWallpaperSettings(wallpaper.settings);
   if (wallpaper instanceof GramJs.WallPaperNoFile) {
-    return { slug: '', id: wallpaper.id, idStr: String(wallpaper.id), wallpaperNoFile: wallpaper };
+    return {
+      id,
+      slug: '', 
+      wallpaperNoFile: {
+        className: wallpaper.className,
+        default: wallpaper.default,
+        dark: wallpaper.dark,
+        settings,
+      }
+    };
   }
-
   const document = buildApiDocument(wallpaper.document);
-
   const { slug } = wallpaper;
   return {
+    id,
     slug,
-    id: wallpaper.id,
-    idStr: String(wallpaper.id),
     document,
-    wallpaper,
+    wallpaper: wallpaper.settings && {
+      default: wallpaper.default,
+      className: wallpaper.className,
+      dark: wallpaper.dark,
+      pattern: wallpaper.pattern,
+      settings,
+    }
   };
 }
 
