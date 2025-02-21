@@ -5,9 +5,52 @@ import { ApiMessageEntityTypes } from '../api/types';
  */
 export function parseMarkdownWithAST(input: string): string {
   const { nodes } = parseUntil(input, null, 0);
-  const result = astToHTML(nodes);
+  const output = astToHTML(nodes);
+  const result = parseBlockquote(output);
   return result;
 }
+
+function parseBlockquote(input: string): string {
+  const lines = input.split('\n');
+  let result: string[] = [];
+  let currentQuote: string[] = [];
+  let isCollapsed = false;
+
+  function flushQuote() {
+    if (currentQuote.length > 0) {
+      const quoteContent = currentQuote.join('\n');
+      const collapseAttr = isCollapsed ? ' data-collapsed="1"' : '';
+      result.push(`<blockquote data-entity-type="${ApiMessageEntityTypes.Blockquote}"${collapseAttr}>${quoteContent}</blockquote>`);
+      currentQuote = [];
+      isCollapsed = false;
+    }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    if (line.startsWith('**&gt;') && line !== '**&gt;') {
+      // Handle collapsed quote
+      flushQuote();
+      isCollapsed = true;
+      currentQuote.push(line.slice(6));
+    } else if (line.startsWith('&gt;') && line !== '&gt;') {
+      // Handle regular quote
+      if (currentQuote.length === 0) {
+        isCollapsed = false;
+      }
+      currentQuote.push(line.slice(4));
+    } else {
+      // Handle non-quote line
+      flushQuote();
+      result.push(line);
+    }
+  }
+
+  flushQuote();
+  return result.join('\n');
+}
+
 
 // Enhanced type definitions
 type MarkerType = 'text' | 'bold' | 'italic' | 'strikethrough' | 'spoiler' | 'pre' | 'code';
@@ -34,7 +77,6 @@ const MARKERS = {
   PRE: { token: "```", type: "pre" as const },
   CODE: { token: "`", type: "code" as const },
   BOLD: { token: "**", type: "bold" as const },
-  // ITALIC: { token: "*", type: "italic" as const },
   ITALIC: { token: "__", type: "italic" as const },
   STRIKETHROUGH: { token: "~~", type: "strikethrough" as const },
   SPOILER: { token: "||", type: "spoiler" as const },
