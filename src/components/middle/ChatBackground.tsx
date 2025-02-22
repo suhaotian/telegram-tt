@@ -46,6 +46,7 @@ function ChatBackground({
   const customBackgroundValue = useCustomBackground(theme, customBackground);
 
   const bgClassName = buildClassName(
+    'chat-background',
     styles.background,
     pattern && styles.isPattern,
     dark && styles.isDark,

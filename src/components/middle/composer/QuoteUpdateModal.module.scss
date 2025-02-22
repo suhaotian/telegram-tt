@@ -35,12 +35,19 @@
 .chatContainer {
   position: relative;
   margin-bottom: 0.25rem;
+
+
+  :global(.chat-background) {
+    z-index: 1;
+  }
 }
 
 .chatContent {
+  position: relative;
   padding: 0.5rem 1rem 0;
   max-height: min(38vh, 400px);
   overflow-y: auto;
+  z-index: 2;
 
   @media screen and (min-width: 600px) {
     max-height: 50vh;

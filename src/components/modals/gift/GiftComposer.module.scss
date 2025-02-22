@@ -10,6 +10,13 @@
   padding-inline: 0.75rem;
 
   @include mixins.adapt-padding-to-scrollbar(0.75rem);
+
+  :global(.chat-background) {
+    z-index: 1;
+  }
+  :global(.ActionMessage) {
+    z-index: 2;
+  }
 }
 
 .header {
