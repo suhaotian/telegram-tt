@@ -184,7 +184,7 @@ const foldersReducer: StateReducer<FoldersState, FoldersActions> = (
           } : {
             ...state.folder.title,
             text: titleText,
-            entities,
+            entities: entities.filter(item => item.type !== ApiMessageEntityTypes.CustomEmoji)
           },
         },
         isTouched: true,
